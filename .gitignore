@@ -13,6 +13,7 @@ debug_*.png
 debug_*.jpg
 debug_*.mp4
 debug_*.xml
+play-store-screenshots/
 
 # Editor and OS noise
 .idea/

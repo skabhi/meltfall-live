@@ -8,11 +8,13 @@ import android.view.Window;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
+import android.widget.SeekBar;
 import android.widget.Switch;
 import android.widget.TextView;
 
 public class SettingsActivity extends Activity {
     private RainSettings.Values values;
+    private TextView fpsValue;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -81,6 +83,8 @@ public class SettingsActivity extends Activity {
         page.addView(section, sectionParams);
 
         addFpsToggle(page);
+        fpsValue = addFpsControl(page);
+        updateLabels();
     }
 
     private void addFpsToggle(LinearLayout page) {
@@ -114,6 +118,80 @@ public class SettingsActivity extends Activity {
         row.addView(toggle);
 
         addSettingRow(page, row);
+    }
+
+    private TextView addFpsControl(LinearLayout page) {
+        LinearLayout row = settingRow();
+
+        TextView valueText = titleText("");
+        row.addView(valueText);
+
+        TextView name = mutedText("Animation FPS limit");
+        row.addView(name);
+
+        SeekBar seekBar = new SeekBar(this);
+        seekBar.setMax(3);
+        seekBar.setProgress(fpsToProgress(values.maxFps));
+        seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                if (fromUser) {
+                    values = new RainSettings.Values(
+                            values.speedPercent,
+                            values.emojiCount,
+                            values.sizePercent,
+                            progressToFps(progress),
+                            values.showFps
+                    );
+                    RainSettings.save(SettingsActivity.this, values);
+                    updateLabels();
+                }
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+            }
+        });
+        row.addView(seekBar);
+
+        addSettingRow(page, row);
+        return valueText;
+    }
+
+    private void updateLabels() {
+        if (fpsValue != null) {
+            fpsValue.setText(values.maxFps == 0 ? "Unlimited" : values.maxFps + " FPS");
+        }
+    }
+
+    private int fpsToProgress(int fps) {
+        if (fps == 60) {
+            return 1;
+        }
+        if (fps == 45) {
+            return 2;
+        }
+        if (fps == 30) {
+            return 3;
+        }
+        return 0;
+    }
+
+    private int progressToFps(int progress) {
+        if (progress == 1) {
+            return 60;
+        }
+        if (progress == 2) {
+            return 45;
+        }
+        if (progress == 3) {
+            return 30;
+        }
+        return 0;
     }
 
     private LinearLayout settingRow() {

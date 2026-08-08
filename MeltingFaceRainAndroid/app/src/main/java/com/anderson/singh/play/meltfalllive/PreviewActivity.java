@@ -24,7 +24,6 @@ import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.SeekBar;
-import android.widget.Switch;
 import android.widget.TextView;
 
 public class PreviewActivity extends Activity {
@@ -36,7 +35,6 @@ public class PreviewActivity extends Activity {
     private RainSettings.Values values;
     private TextView speedValue;
     private TextView sizeValue;
-    private TextView fpsValue;
     private int collapsedHeight;
     private int expandedHeight;
     private boolean sheetExpanded;
@@ -216,7 +214,6 @@ public class PreviewActivity extends Activity {
             updateLabels();
         });
 
-        fpsValue = addFpsControl(settings);
         addResetControl(settings);
 
         sheet.addView(scroll, new LinearLayout.LayoutParams(
@@ -350,50 +347,6 @@ public class PreviewActivity extends Activity {
         }
     }
 
-    private TextView addFpsControl(LinearLayout page) {
-        LinearLayout row = settingRow();
-
-        TextView valueText = new TextView(this);
-        valueText.setTextColor(Color.WHITE);
-        valueText.setTextSize(20f);
-        row.addView(valueText);
-
-        TextView name = mutedText("Animation FPS limit", 15f);
-        row.addView(name);
-
-        SeekBar seekBar = new SeekBar(this);
-        seekBar.setMax(3);
-        seekBar.setProgress(fpsToProgress(values.maxFps));
-        seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-            @Override
-            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                if (fromUser) {
-                    values = new RainSettings.Values(
-                            values.speedPercent,
-                            values.emojiCount,
-                            values.sizePercent,
-                            progressToFps(progress),
-                            values.showFps
-                    );
-                    RainSettings.save(PreviewActivity.this, values);
-                    updateLabels();
-                }
-            }
-
-            @Override
-            public void onStartTrackingTouch(SeekBar seekBar) {
-            }
-
-            @Override
-            public void onStopTrackingTouch(SeekBar seekBar) {
-            }
-        });
-        row.addView(seekBar);
-
-        addSettingRow(page, row);
-        return valueText;
-    }
-
     private void addResetControl(LinearLayout page) {
         Button reset = new Button(this);
         reset.setText("Reset defaults");
@@ -402,7 +355,13 @@ public class PreviewActivity extends Activity {
         reset.setTextColor(Color.WHITE);
         reset.setBackgroundResource(R.drawable.bg_secondary_button);
         reset.setOnClickListener(v -> {
-            RainSettings.reset(this);
+            RainSettings.save(this, new RainSettings.Values(
+                    RainSettings.DEFAULT_SPEED,
+                    RainSettings.DEFAULT_EMOJI_COUNT,
+                    RainSettings.DEFAULT_SIZE,
+                    values.maxFps,
+                    values.showFps
+            ));
             values = RainSettings.load(this);
             recreate();
         });
@@ -450,7 +409,6 @@ public class PreviewActivity extends Activity {
     private void updateLabels() {
         speedValue.setText(values.speedPercent + "%");
         sizeValue.setText(values.sizePercent + "%");
-        fpsValue.setText(values.maxFps == 0 ? "Unlimited" : values.maxFps + " FPS");
     }
 
     private void onPreviewChanged(CompoundButton button, boolean checked) {
@@ -486,32 +444,6 @@ public class PreviewActivity extends Activity {
             sheetAnimator.cancel();
             sheetAnimator = null;
         }
-    }
-
-    private int fpsToProgress(int fps) {
-        if (fps == 60) {
-            return 1;
-        }
-        if (fps == 45) {
-            return 2;
-        }
-        if (fps == 30) {
-            return 3;
-        }
-        return 0;
-    }
-
-    private int progressToFps(int progress) {
-        if (progress == 1) {
-            return 60;
-        }
-        if (progress == 2) {
-            return 45;
-        }
-        if (progress == 3) {
-            return 30;
-        }
-        return 0;
     }
 
     private int clamp(int value, int min, int max) {
