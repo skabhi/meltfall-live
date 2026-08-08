@@ -1,0 +1,31 @@
+# Local Android toolchains and dependency caches
+android-build-deps/
+.gradle/
+
+# Android build output
+MeltingFaceRainAndroid/.gradle/
+MeltingFaceRainAndroid/build/
+MeltingFaceRainAndroid/app/build/
+MeltingFaceRainAndroid/local.properties
+
+# Local debug/test captures from ADB sessions
+debug_*.png
+debug_*.jpg
+debug_*.mp4
+debug_*.xml
+
+# Editor and OS noise
+.idea/
+.vscode/
+*.user
+*.suo
+Thumbs.db
+Desktop.ini
+
+# Logs and temp files
+*.log
+*.tmp
+
+# Unrelated files that were present in this workspace
+PX4_FMUv3_Recovery_Knowledge_Base.txt
+Run-PX4-112-PatchBuild.ps1

@@ -1,0 +1,38 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <application
+        android:theme="@style/AppTheme"
+        android:label="@string/app_name"
+        android:icon="@mipmap/ic_launcher"
+        android:allowBackup="false"
+        android:supportsRtl="true">
+        <activity
+            android:name=".SettingsActivity"
+            android:screenOrientation="fullSensor"
+            android:exported="true" />
+        <activity
+            android:name=".PreviewActivity"
+            android:screenOrientation="fullSensor"
+            android:exported="false" />
+        <activity
+            android:name=".MainActivity"
+            android:screenOrientation="fullSensor"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <service
+            android:name=".FunkyFaceWallpaperService"
+            android:label="@string/wallpaper_name"
+            android:permission="android.permission.BIND_WALLPAPER"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.service.wallpaper.WallpaperService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.service.wallpaper"
+                android:resource="@xml/funky_face_wallpaper" />
+        </service>
+    </application>
+</manifest>
