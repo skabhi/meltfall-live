@@ -7,6 +7,10 @@ brightness variation.
 The repository also keeps the earlier Windows/PowerShell versions as secondary
 desktop artifacts, but current development is focused on Android.
 
+## Author
+
+Abhishek Kumar Singh
+
 ## Project Layout
 
 - `MeltingFaceRainAndroid/` - primary Android live wallpaper project.
