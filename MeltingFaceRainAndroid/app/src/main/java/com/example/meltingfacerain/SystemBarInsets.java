@@ -15,13 +15,13 @@ public final class SystemBarInsets {
 
         view.setOnApplyWindowInsetsListener((target, insets) -> {
             target.setPadding(
-                    left,
+                    left + insets.getSystemWindowInsetLeft(),
                     top,
-                    right,
+                    right + insets.getSystemWindowInsetRight(),
                     bottom + insets.getSystemWindowInsetBottom()
             );
             return insets;
         });
-        view.requestApplyInsets();
+        view.post(view::requestApplyInsets);
     }
 }
