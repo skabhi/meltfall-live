@@ -11,6 +11,11 @@ live wallpaper using a custom rendering view, hardware acceleration,
 - Android Gradle Plugin 8.7.3
 - Gradle 8.10.2, or Android Studio with compatible Gradle support
 
+## Version
+
+The Android app version is read from the repository root `VERSION` file. Update
+that file before building when preparing a new app version.
+
 ## Build
 
 From the repository root:

@@ -11,6 +11,12 @@ desktop artifacts, but current development is focused on Android.
 
 Abhishek Kumar Singh
 
+## Current Version
+
+The current project and Android app version is tracked in [VERSION](VERSION).
+The Android Gradle build reads this file and derives the APK `versionName` and
+`versionCode` from it, so future version bumps should update `VERSION` first.
+
 ## Project Layout
 
 - `MeltingFaceRainAndroid/` - primary Android live wallpaper project.
@@ -148,6 +154,9 @@ git add .
 git commit -m "Describe the change"
 git push
 ```
+
+For a version bump, update [VERSION](VERSION), rebuild the Android APK, refresh
+`MeltfallLiveAndroid-debug.apk`, then commit and push the version change.
 
 This project is configured locally on the original development computer to use
 a dedicated SSH key for pushes. A new computer needs its own GitHub
