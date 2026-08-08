@@ -1,4 +1,4 @@
-package com.example.meltingfacerain;
+package com.anderson.singh.play.meltfalllive;
 
 import android.graphics.Canvas;
 import android.graphics.Color;

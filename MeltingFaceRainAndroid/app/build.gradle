@@ -11,11 +11,11 @@ while (meltfallVersionParts.size() < 3) {
 def meltfallVersionCode = meltfallVersionParts[0] * 10000 + meltfallVersionParts[1] * 100 + meltfallVersionParts[2]
 
 android {
-    namespace "com.example.meltingfacerain"
+    namespace "com.anderson.singh.play.meltfalllive"
     compileSdk 35
 
     defaultConfig {
-        applicationId "com.example.meltingfacerain"
+        applicationId "com.anderson.singh.play.meltfalllive"
         minSdk 23
         targetSdk 35
         versionCode meltfallVersionCode

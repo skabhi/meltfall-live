@@ -1,4 +1,4 @@
-package com.example.meltingfacerain;
+package com.anderson.singh.play.meltfalllive;
 
 import android.app.Activity;
 import android.content.Intent;
