@@ -29,3 +29,7 @@ Desktop.ini
 # Unrelated files that were present in this workspace
 PX4_FMUv3_Recovery_Knowledge_Base.txt
 Run-PX4-112-PatchBuild.ps1
+
+# Old Android APK artifact names
+FunkyFaceRainAndroid-debug.apk
+MeltingFaceRainAndroid-debug.apk

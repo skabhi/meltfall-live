@@ -46,7 +46,7 @@ adb install -r .\app\build\outputs\apk\debug\app-debug.apk
 From the repository root, install the copied root APK with:
 
 ```powershell
-adb install -r .\FunkyFaceRainAndroid-debug.apk
+adb install -r .\MeltfallLiveAndroid-debug.apk
 ```
 
 ## Use

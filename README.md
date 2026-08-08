@@ -14,7 +14,7 @@ Abhishek Kumar Singh
 ## Project Layout
 
 - `MeltingFaceRainAndroid/` - primary Android live wallpaper project.
-- `FunkyFaceRainAndroid-debug.apk` - latest debug APK copied to the repo root.
+- `MeltfallLiveAndroid-debug.apk` - latest debug APK copied to the repo root.
 - `funky_emoji_assets/` - source PNG variants used by the funky wallpaper.
 - `melting_face_wpf.ps1` and `melting_face_wpf_funky.ps1` - Windows WPF scripts.
 - `MeltingFaceRainExe.cs` and `MeltingFaceRainFunkyExe.cs` - Windows executable sources.
@@ -86,7 +86,7 @@ MeltingFaceRainAndroid\app\build\outputs\apk\debug\app-debug.apk
 To refresh the root APK artifact:
 
 ```powershell
-Copy-Item -LiteralPath .\MeltingFaceRainAndroid\app\build\outputs\apk\debug\app-debug.apk -Destination .\FunkyFaceRainAndroid-debug.apk -Force
+Copy-Item -LiteralPath .\MeltingFaceRainAndroid\app\build\outputs\apk\debug\app-debug.apk -Destination .\MeltfallLiveAndroid-debug.apk -Force
 ```
 
 ## Install On Android Phone
@@ -104,13 +104,13 @@ adb devices
 6. Install the debug APK:
 
 ```powershell
-adb install -r .\FunkyFaceRainAndroid-debug.apk
+adb install -r .\MeltfallLiveAndroid-debug.apk
 ```
 
 If ADB is not on `PATH`, use the full path to `adb.exe`, for example:
 
 ```powershell
-& "C:\Path\To\Android\sdk\platform-tools\adb.exe" install -r .\FunkyFaceRainAndroid-debug.apk
+& "C:\Path\To\Android\sdk\platform-tools\adb.exe" install -r .\MeltfallLiveAndroid-debug.apk
 ```
 
 ## Use The Android App
