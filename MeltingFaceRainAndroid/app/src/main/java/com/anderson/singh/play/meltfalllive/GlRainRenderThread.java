@@ -11,6 +11,8 @@ import android.view.Surface;
 import android.view.SurfaceHolder;
 
 final class GlRainRenderThread extends Thread {
+    private static final int EGL_OPENGL_ES3_BIT_KHR = 0x00000040;
+
     private final Context context;
     private final Object nativeWindow;
     private final Object lock = new Object();
@@ -141,7 +143,7 @@ final class GlRainRenderThread extends Thread {
             EGL14.eglInitialize(display, version, 0, version, 1);
 
             int[] configAttributes = {
-                    EGL14.EGL_RENDERABLE_TYPE, EGL14.EGL_OPENGL_ES2_BIT,
+                    EGL14.EGL_RENDERABLE_TYPE, EGL_OPENGL_ES3_BIT_KHR,
                     EGL14.EGL_RED_SIZE, 8,
                     EGL14.EGL_GREEN_SIZE, 8,
                     EGL14.EGL_BLUE_SIZE, 8,
@@ -153,7 +155,7 @@ final class GlRainRenderThread extends Thread {
             EGL14.eglChooseConfig(display, configAttributes, 0, configs, 0, 1, configCount, 0);
 
             int[] contextAttributes = {
-                    EGL14.EGL_CONTEXT_CLIENT_VERSION, 2,
+                    EGL14.EGL_CONTEXT_CLIENT_VERSION, 3,
                     EGL14.EGL_NONE
             };
             EGLContext context = EGL14.eglCreateContext(display, configs[0],

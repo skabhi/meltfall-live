@@ -5,6 +5,7 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.opengl.GLES20;
+import android.opengl.GLES30;
 import android.opengl.GLUtils;
 
 import java.nio.ByteBuffer;
@@ -12,8 +13,9 @@ import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 
 final class GlRainRenderer {
-    private static final int FLOATS_PER_VERTEX = 5;
-    private static final int VERTICES_PER_DROP = 6;
+    private static final int FLOATS_PER_QUAD_VERTEX = 4;
+    private static final int FLOATS_PER_INSTANCE = 8;
+    private static final int QUAD_VERTICES = 6;
     private static final int ATLAS_COLUMNS = 4;
     private static final int ATLAS_ROWS = 2;
 
@@ -22,14 +24,17 @@ final class GlRainRenderer {
 
     private int program;
     private int textureId;
-    private int positionHandle;
-    private int uvHandle;
-    private int alphaHandle;
+    private int cornerHandle;
+    private int uvCornerHandle;
+    private int centerSizeAlphaHandle;
+    private int rotationUvOriginHandle;
     private int resolutionHandle;
+    private int atlasCellSizeHandle;
     private int textureHandle;
     private int width;
     private int height;
-    private FloatBuffer vertexBuffer = allocateBuffer(256);
+    private final FloatBuffer quadBuffer = allocateQuadBuffer();
+    private FloatBuffer instanceBuffer = allocateBuffer(256);
 
     GlRainRenderer(Context context) {
         this.context = context.getApplicationContext();
@@ -38,10 +43,12 @@ final class GlRainRenderer {
 
     void onSurfaceCreated() {
         program = createProgram(VERTEX_SHADER, FRAGMENT_SHADER);
-        positionHandle = GLES20.glGetAttribLocation(program, "aPosition");
-        uvHandle = GLES20.glGetAttribLocation(program, "aUv");
-        alphaHandle = GLES20.glGetAttribLocation(program, "aAlpha");
+        cornerHandle = GLES20.glGetAttribLocation(program, "aCorner");
+        uvCornerHandle = GLES20.glGetAttribLocation(program, "aUvCorner");
+        centerSizeAlphaHandle = GLES20.glGetAttribLocation(program, "aCenterSizeAlpha");
+        rotationUvOriginHandle = GLES20.glGetAttribLocation(program, "aRotationUvOrigin");
         resolutionHandle = GLES20.glGetUniformLocation(program, "uResolution");
+        atlasCellSizeHandle = GLES20.glGetUniformLocation(program, "uAtlasCellSize");
         textureHandle = GLES20.glGetUniformLocation(program, "uTexture");
         textureId = createAtlasTexture(scene.getEmojis());
 
@@ -76,26 +83,34 @@ final class GlRainRenderer {
 
         GLES20.glUseProgram(program);
         GLES20.glUniform2f(resolutionHandle, width, height);
+        GLES20.glUniform2f(atlasCellSizeHandle, 1f / ATLAS_COLUMNS, 1f / ATLAS_ROWS);
         GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, textureId);
         GLES20.glUniform1i(textureHandle, 0);
 
-        vertexBuffer.position(0);
-        GLES20.glVertexAttribPointer(positionHandle, 2, GLES20.GL_FLOAT, false,
-                FLOATS_PER_VERTEX * 4, vertexBuffer);
-        GLES20.glEnableVertexAttribArray(positionHandle);
+        quadBuffer.position(0);
+        GLES20.glVertexAttribPointer(cornerHandle, 2, GLES20.GL_FLOAT, false,
+                FLOATS_PER_QUAD_VERTEX * 4, quadBuffer);
+        GLES20.glEnableVertexAttribArray(cornerHandle);
 
-        vertexBuffer.position(2);
-        GLES20.glVertexAttribPointer(uvHandle, 2, GLES20.GL_FLOAT, false,
-                FLOATS_PER_VERTEX * 4, vertexBuffer);
-        GLES20.glEnableVertexAttribArray(uvHandle);
+        quadBuffer.position(2);
+        GLES20.glVertexAttribPointer(uvCornerHandle, 2, GLES20.GL_FLOAT, false,
+                FLOATS_PER_QUAD_VERTEX * 4, quadBuffer);
+        GLES20.glEnableVertexAttribArray(uvCornerHandle);
 
-        vertexBuffer.position(4);
-        GLES20.glVertexAttribPointer(alphaHandle, 1, GLES20.GL_FLOAT, false,
-                FLOATS_PER_VERTEX * 4, vertexBuffer);
-        GLES20.glEnableVertexAttribArray(alphaHandle);
+        instanceBuffer.position(0);
+        GLES20.glVertexAttribPointer(centerSizeAlphaHandle, 4, GLES20.GL_FLOAT, false,
+                FLOATS_PER_INSTANCE * 4, instanceBuffer);
+        GLES20.glEnableVertexAttribArray(centerSizeAlphaHandle);
+        GLES30.glVertexAttribDivisor(centerSizeAlphaHandle, 1);
 
-        GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, vertexCount);
+        instanceBuffer.position(4);
+        GLES20.glVertexAttribPointer(rotationUvOriginHandle, 4, GLES20.GL_FLOAT, false,
+                FLOATS_PER_INSTANCE * 4, instanceBuffer);
+        GLES20.glEnableVertexAttribArray(rotationUvOriginHandle);
+        GLES30.glVertexAttribDivisor(rotationUvOriginHandle, 1);
+
+        GLES30.glDrawArraysInstanced(GLES20.GL_TRIANGLES, 0, QUAD_VERTICES, vertexCount);
     }
 
     int getDropCount() {
@@ -110,25 +125,25 @@ final class GlRainRenderer {
             }
         }
 
-        int requiredFloats = Math.max(1, visibleDrops * VERTICES_PER_DROP * FLOATS_PER_VERTEX);
-        if (vertexBuffer.capacity() < requiredFloats) {
-            vertexBuffer = allocateBuffer(requiredFloats);
+        int requiredFloats = Math.max(1, visibleDrops * FLOATS_PER_INSTANCE);
+        if (instanceBuffer.capacity() < requiredFloats) {
+            instanceBuffer = allocateBuffer(requiredFloats);
         }
 
-        vertexBuffer.clear();
-        int vertexCount = 0;
+        instanceBuffer.clear();
+        int instanceCount = 0;
         for (RainScene.Drop drop : scene.getDrops()) {
             if (!isVisible(drop)) {
                 continue;
             }
-            addDropVertices(drop);
-            vertexCount += VERTICES_PER_DROP;
+            addDropInstance(drop);
+            instanceCount++;
         }
-        vertexBuffer.position(0);
-        return vertexCount;
+        instanceBuffer.position(0);
+        return instanceCount;
     }
 
-    private void addDropVertices(RainScene.Drop drop) {
+    private void addDropInstance(RainScene.Drop drop) {
         float half = drop.size / 2f;
         float centerX = drop.x + half;
         float centerY = drop.y + half;
@@ -136,41 +151,19 @@ final class GlRainRenderer {
         float cos = (float) Math.cos(radians);
         float sin = (float) Math.sin(radians);
 
-        float[] points = {
-                -half, -half,
-                half, -half,
-                -half, half,
-                half, -half,
-                half, half,
-                -half, half
-        };
-
         float column = drop.emojiIndex % ATLAS_COLUMNS;
         float row = drop.emojiIndex / ATLAS_COLUMNS;
         float u0 = column / ATLAS_COLUMNS;
         float v0 = row / ATLAS_ROWS;
-        float u1 = (column + 1f) / ATLAS_COLUMNS;
-        float v1 = (row + 1f) / ATLAS_ROWS;
-        float[] uvs = {
-                u0, v0,
-                u1, v0,
-                u0, v1,
-                u1, v0,
-                u1, v1,
-                u0, v1
-        };
 
-        for (int i = 0; i < VERTICES_PER_DROP; i++) {
-            float localX = points[i * 2];
-            float localY = points[i * 2 + 1];
-            float x = centerX + localX * cos - localY * sin;
-            float y = centerY + localX * sin + localY * cos;
-            vertexBuffer.put(x);
-            vertexBuffer.put(y);
-            vertexBuffer.put(uvs[i * 2]);
-            vertexBuffer.put(uvs[i * 2 + 1]);
-            vertexBuffer.put(drop.alpha);
-        }
+        instanceBuffer.put(centerX);
+        instanceBuffer.put(centerY);
+        instanceBuffer.put(drop.size);
+        instanceBuffer.put(drop.alpha);
+        instanceBuffer.put(cos);
+        instanceBuffer.put(sin);
+        instanceBuffer.put(u0);
+        instanceBuffer.put(v0);
     }
 
     private boolean isVisible(RainScene.Drop drop) {
@@ -217,9 +210,24 @@ final class GlRainRenderer {
                 .asFloatBuffer();
     }
 
+    private static FloatBuffer allocateQuadBuffer() {
+        FloatBuffer buffer = allocateBuffer(QUAD_VERTICES * FLOATS_PER_QUAD_VERTEX);
+        float[] vertices = {
+                -0.5f, -0.5f, 0f, 0f,
+                0.5f, -0.5f, 1f, 0f,
+                -0.5f, 0.5f, 0f, 1f,
+                0.5f, -0.5f, 1f, 0f,
+                0.5f, 0.5f, 1f, 1f,
+                -0.5f, 0.5f, 0f, 1f
+        };
+        buffer.put(vertices);
+        buffer.position(0);
+        return buffer;
+    }
+
     private static int createProgram(String vertexShader, String fragmentShader) {
-        int vertex = compileShader(GLES20.GL_VERTEX_SHADER, vertexShader);
-        int fragment = compileShader(GLES20.GL_FRAGMENT_SHADER, fragmentShader);
+        int vertex = compileShader(GLES30.GL_VERTEX_SHADER, vertexShader);
+        int fragment = compileShader(GLES30.GL_FRAGMENT_SHADER, fragmentShader);
         int program = GLES20.glCreateProgram();
         GLES20.glAttachShader(program, vertex);
         GLES20.glAttachShader(program, fragment);
@@ -235,27 +243,38 @@ final class GlRainRenderer {
     }
 
     private static final String VERTEX_SHADER =
-            "attribute vec2 aPosition;\n"
-                    + "attribute vec2 aUv;\n"
-                    + "attribute float aAlpha;\n"
+            "#version 300 es\n"
+                    + "in vec2 aCorner;\n"
+                    + "in vec2 aUvCorner;\n"
+                    + "in vec4 aCenterSizeAlpha;\n"
+                    + "in vec4 aRotationUvOrigin;\n"
                     + "uniform vec2 uResolution;\n"
-                    + "varying vec2 vUv;\n"
-                    + "varying float vAlpha;\n"
+                    + "uniform vec2 uAtlasCellSize;\n"
+                    + "out vec2 vUv;\n"
+                    + "out float vAlpha;\n"
                     + "void main() {\n"
-                    + "  vec2 zeroToOne = aPosition / uResolution;\n"
+                    + "  vec2 center = aCenterSizeAlpha.xy;\n"
+                    + "  float size = aCenterSizeAlpha.z;\n"
+                    + "  vec2 rotation = aRotationUvOrigin.xy;\n"
+                    + "  vec2 local = aCorner * size;\n"
+                    + "  vec2 rotated = vec2(local.x * rotation.x - local.y * rotation.y,\n"
+                    + "                      local.x * rotation.y + local.y * rotation.x);\n"
+                    + "  vec2 zeroToOne = (center + rotated) / uResolution;\n"
                     + "  vec2 clip = zeroToOne * 2.0 - 1.0;\n"
                     + "  gl_Position = vec4(clip.x, -clip.y, 0.0, 1.0);\n"
-                    + "  vUv = aUv;\n"
-                    + "  vAlpha = aAlpha;\n"
+                    + "  vUv = aRotationUvOrigin.zw + aUvCorner * uAtlasCellSize;\n"
+                    + "  vAlpha = aCenterSizeAlpha.w;\n"
                     + "}\n";
 
     private static final String FRAGMENT_SHADER =
-            "precision mediump float;\n"
+            "#version 300 es\n"
+                    + "precision mediump float;\n"
                     + "uniform sampler2D uTexture;\n"
-                    + "varying vec2 vUv;\n"
-                    + "varying float vAlpha;\n"
+                    + "in vec2 vUv;\n"
+                    + "in float vAlpha;\n"
+                    + "out vec4 fragColor;\n"
                     + "void main() {\n"
-                    + "  vec4 color = texture2D(uTexture, vUv);\n"
-                    + "  gl_FragColor = vec4(color.rgb, color.a * vAlpha);\n"
+                    + "  vec4 color = texture(uTexture, vUv);\n"
+                    + "  fragColor = vec4(color.rgb, color.a * vAlpha);\n"
                     + "}\n";
 }
