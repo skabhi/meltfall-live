@@ -1,34 +1,82 @@
 # Meltfall Live Android
 
-This is the primary Android app module for Meltfall Live. It is a native live
-wallpaper using a custom rendering view, hardware acceleration,
+This is the primary app in the Meltfall Live repository. It is a native Android
+live wallpaper using a custom rendering view, hardware acceleration,
 `Choreographer`, and bitmap matrix transforms.
 
-The canonical setup, build, install, troubleshooting, and release-default
-instructions are in the repository root [README.md](../README.md).
-
-Quick build from the repository root:
-
-```powershell
-.\gradlew.bat -p .\MeltingFaceRainAndroid assembleDebug
-```
-
-Generated APK:
-
-```text
-MeltingFaceRainAndroid\app\build\outputs\apk\debug\app-debug.apk
-```
-
-Important pinned requirements:
+## Requirements
 
 - JDK 17
-- Android SDK Platform 35
-- Android Build Tools 35.0.0
+- Android SDK with compile SDK 35
 - Android Gradle Plugin 8.7.3
-- Gradle 8.10.2 through the committed root Gradle Wrapper
+- Gradle 8.10.2, or Android Studio with compatible Gradle support
 
-Release defaults are read from:
+## Version
+
+The Android app version is read from the repository root `VERSION` file. Update
+that file before building when preparing a new app version.
+
+## Release Defaults
+
+New-install defaults are read at build time from the repository root
+`config/defaults.properties` file. Open it in Notepad before building a release:
+
+```powershell
+notepad ..\config\defaults.properties
+```
+
+The file documents valid values for drop speed, emoji count, emoji size, FPS
+limit, and the debug-only FPS counter default.
+
+## Build
+
+From the repository root:
+
+```powershell
+$env:JAVA_HOME="C:\Path\To\jdk-17"
+$env:ANDROID_HOME="C:\Path\To\Android\sdk"
+$env:ANDROID_SDK_ROOT=$env:ANDROID_HOME
+gradle -p .\MeltingFaceRainAndroid assembleDebug
+```
+
+If the local `android-build-deps/` folder exists:
+
+```powershell
+.\android-build-deps\gradle-8.10.2\bin\gradle.bat -p .\MeltingFaceRainAndroid assembleDebug
+```
+
+The APK is generated at:
 
 ```text
-config\defaults.properties
+app\build\outputs\apk\debug\app-debug.apk
 ```
+
+## Install
+
+Enable USB debugging on the phone, connect it, approve the prompt, then run:
+
+```powershell
+adb devices
+adb install -r .\app\build\outputs\apk\debug\app-debug.apk
+```
+
+From the repository root, install the copied debug APK with:
+
+```powershell
+adb install -r .\dist\android\MeltfallLiveAndroid-debug.apk
+```
+
+## Use
+
+1. Open **Meltfall Live**.
+2. Tap **View wallpaper**.
+3. Drag the bottom sheet up to tune wallpaper-specific settings.
+4. Tap **Use this wallpaper**.
+5. Use Android's wallpaper preview to apply the live wallpaper.
+
+## Notes
+
+- The main screen gear opens app-wide settings.
+- The preview bottom sheet contains settings for this specific wallpaper.
+- Debug builds can show a rendered FPS counter from app-wide settings.
+- Emoji variants use pre-tinted PNG assets for smoother rendering.
