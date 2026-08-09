@@ -85,19 +85,28 @@ public final class RainScene {
             }
 
             paint.setAlpha((int) (drop.alpha * 255));
-            float scaleX = drop.size / drop.emoji.getWidth();
-            float scaleY = drop.size / drop.emoji.getHeight();
+            Bitmap emoji = emojis[drop.emojiIndex];
+            float scaleX = drop.size / emoji.getWidth();
+            float scaleY = drop.size / emoji.getHeight();
             matrix.reset();
-            matrix.postTranslate(-drop.emoji.getWidth() / 2f, -drop.emoji.getHeight() / 2f);
+            matrix.postTranslate(-emoji.getWidth() / 2f, -emoji.getHeight() / 2f);
             matrix.postScale(scaleX, scaleY);
             matrix.postRotate(drop.rotation);
             matrix.postTranslate(drop.x + drop.size / 2f, drop.y + drop.size / 2f);
-            canvas.drawBitmap(drop.emoji, matrix, paint);
+            canvas.drawBitmap(emoji, matrix, paint);
         }
     }
 
     public int getDropCount() {
         return drops.size();
+    }
+
+    public ArrayList<Drop> getDrops() {
+        return drops;
+    }
+
+    public Bitmap[] getEmojis() {
+        return emojis;
     }
 
     private void resetDrop(Drop drop, boolean initial) {
@@ -118,7 +127,7 @@ public final class RainScene {
         drop.rotation = randomRange(0f, 360f);
         drop.spin = randomRange(-124f, 124f) * depth;
         drop.alpha = 0.16f + depth * 0.84f;
-        drop.emoji = emojis[random.nextInt(emojis.length)];
+        drop.emojiIndex = random.nextInt(emojis.length);
     }
 
     private float randomRange(float min, float max) {
@@ -139,7 +148,7 @@ public final class RainScene {
         }
     }
 
-    private static final class Drop {
+    static final class Drop {
         float x;
         float y;
         float size;
@@ -148,6 +157,6 @@ public final class RainScene {
         float rotation;
         float spin;
         float alpha;
-        Bitmap emoji;
+        int emojiIndex;
     }
 }
