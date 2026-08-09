@@ -62,6 +62,7 @@ def defaultShowFps = boolDefault("show_fps", false)
 android {
     namespace "com.anderson.singh.play.meltfalllive"
     compileSdk 35
+    buildToolsVersion "35.0.0"
 
     buildFeatures {
         buildConfig true
