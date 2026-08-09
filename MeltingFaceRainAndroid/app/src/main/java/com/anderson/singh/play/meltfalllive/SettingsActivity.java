@@ -1,6 +1,9 @@
 package com.anderson.singh.play.meltfalllive;
 
 import android.app.Activity;
+import android.content.ClipData;
+import android.content.ClipboardManager;
+import android.content.Context;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.view.Gravity;
@@ -11,6 +14,7 @@ import android.widget.ScrollView;
 import android.widget.SeekBar;
 import android.widget.Switch;
 import android.widget.TextView;
+import android.widget.Toast;
 
 public class SettingsActivity extends Activity {
     private RainSettings.Values values;
@@ -84,6 +88,7 @@ public class SettingsActivity extends Activity {
 
         addFpsToggle(page);
         fpsValue = addFpsControl(page);
+        addCopyReleaseDefaultsControl(page);
         updateLabels();
     }
 
@@ -160,6 +165,42 @@ public class SettingsActivity extends Activity {
 
         addSettingRow(page, row);
         return valueText;
+    }
+
+    private void addCopyReleaseDefaultsControl(LinearLayout page) {
+        Button copy = new Button(this);
+        copy.setText("Copy current values as release defaults");
+        copy.setAllCaps(false);
+        copy.setTextSize(16f);
+        copy.setTextColor(Color.WHITE);
+        copy.setBackgroundResource(R.drawable.bg_secondary_button);
+        copy.setOnClickListener(v -> copyReleaseDefaults());
+
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                dp(58)
+        );
+        params.topMargin = dp(14);
+        page.addView(copy, params);
+
+        TextView hint = mutedText("Copies the source constants to use before building a release.");
+        LinearLayout.LayoutParams hintParams = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+        );
+        hintParams.topMargin = dp(8);
+        page.addView(hint, hintParams);
+    }
+
+    private void copyReleaseDefaults() {
+        String snippet =
+                "public static final int DEFAULT_SPEED = " + values.speedPercent + ";\\n" +
+                "public static final int DEFAULT_EMOJI_COUNT = " + values.emojiCount + ";\\n" +
+                "public static final int DEFAULT_SIZE = " + values.sizePercent + ";\\n" +
+                "public static final int DEFAULT_FPS = " + values.maxFps + ";\\n";
+        ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+        clipboard.setPrimaryClip(ClipData.newPlainText("Meltfall release defaults", snippet));
+        Toast.makeText(this, "Release defaults copied", Toast.LENGTH_SHORT).show();
     }
 
     private void updateLabels() {

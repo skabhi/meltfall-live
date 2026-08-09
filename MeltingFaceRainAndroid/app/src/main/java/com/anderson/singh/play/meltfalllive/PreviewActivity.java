@@ -207,7 +207,7 @@ public class PreviewActivity extends Activity {
                 LinearLayout.LayoutParams.WRAP_CONTENT
         ));
 
-        speedValue = addPercentControl(settings, "Drop speed", 25, 200, values.speedPercent, value -> {
+        speedValue = addPercentControl(settings, "Drop speed", 0, 200, values.speedPercent, value -> {
             values = new RainSettings.Values(value, values.emojiCount, values.sizePercent, values.maxFps, values.showFps);
             RainSettings.save(this, values);
             updateLabels();
@@ -414,8 +414,12 @@ public class PreviewActivity extends Activity {
     }
 
     private void updateLabels() {
-        speedValue.setText(values.speedPercent + "%");
+        speedValue.setText(formatSpeed(values.speedPercent));
         sizeValue.setText(values.sizePercent + "%");
+    }
+
+    private String formatSpeed(int speedValue) {
+        return String.format(java.util.Locale.US, "%.2fx", speedValue / 100f);
     }
 
     private void onPreviewChanged(CompoundButton button, boolean checked) {

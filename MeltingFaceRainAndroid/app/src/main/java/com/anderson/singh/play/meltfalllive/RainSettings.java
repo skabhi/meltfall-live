@@ -35,7 +35,7 @@ public final class RainSettings {
     public static void save(Context context, Values values) {
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
                 .edit()
-                .putInt(SPEED, clamp(values.speedPercent, 25, 200))
+                .putInt(SPEED, clamp(values.speedPercent, 0, 200))
                 .putInt(EMOJI_COUNT, values.emojiCount)
                 .putInt(SIZE, clamp(values.sizePercent, 60, 170))
                 .putInt(FPS, values.maxFps)
@@ -67,7 +67,7 @@ public final class RainSettings {
         }
 
         public Values(int speedPercent, int emojiCount, int sizePercent, int maxFps, boolean showFps) {
-            this.speedPercent = clamp(speedPercent, 25, 200);
+            this.speedPercent = clamp(speedPercent, 0, 200);
             this.emojiCount = Math.max(0, emojiCount);
             this.sizePercent = clamp(sizePercent, 60, 170);
             this.maxFps = normalizeFps(maxFps);
