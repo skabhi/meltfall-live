@@ -19,7 +19,6 @@ final class GlRainRenderer {
     private static final int FLOATS_PER_INSTANCE = 12;
     private static final int QUAD_VERTICES = 6;
     private static final int ATLAS_COLUMNS = 4;
-    private static final int ATLAS_ROWS = 2;
     private static final int ALPHA_THRESHOLD = 8;
 
     private final Context context;
@@ -142,7 +141,7 @@ final class GlRainRenderer {
         double radians = Math.toRadians(drop.rotation);
         float cos = (float) Math.cos(radians);
         float sin = (float) Math.sin(radians);
-        AtlasEntry entry = atlasEntries[drop.emojiIndex];
+        AtlasEntry entry = atlasEntries[drop.spriteIndex];
 
         float scaleX = drop.size / entry.sourceWidth;
         float scaleY = drop.size / entry.sourceHeight;
@@ -252,7 +251,8 @@ final class GlRainRenderer {
         }
 
         int atlasWidth = cellWidth * ATLAS_COLUMNS;
-        int atlasHeight = cellHeight * ATLAS_ROWS;
+        int atlasRows = (int) Math.ceil(emojis.length / (float) ATLAS_COLUMNS);
+        int atlasHeight = cellHeight * atlasRows;
         Bitmap atlas = Bitmap.createBitmap(atlasWidth, atlasHeight, Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(atlas);
         Paint paint = new Paint(Paint.FILTER_BITMAP_FLAG);

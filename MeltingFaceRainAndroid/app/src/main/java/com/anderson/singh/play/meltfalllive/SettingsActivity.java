@@ -114,6 +114,8 @@ public class SettingsActivity extends Activity {
             values = new RainSettings.Values(
                     values.speedPercent,
                     values.emojiCount,
+                    values.circleCount,
+                    values.diamondCount,
                     values.sizePercent,
                     values.maxFps,
                     checked
@@ -144,6 +146,8 @@ public class SettingsActivity extends Activity {
                     values = new RainSettings.Values(
                             values.speedPercent,
                             values.emojiCount,
+                            values.circleCount,
+                            values.diamondCount,
                             values.sizePercent,
                             progressToFps(progress),
                             values.showFps
@@ -196,6 +200,8 @@ public class SettingsActivity extends Activity {
         String snippet =
                 "drop_speed=" + values.speedPercent + "\\n" +
                 "emoji_count=" + values.emojiCount + "\\n" +
+                "circle_count=" + values.circleCount + "\\n" +
+                "diamond_count=" + values.diamondCount + "\\n" +
                 "emoji_size=" + values.sizePercent + "\\n" +
                 "fps_limit=" + values.maxFps + "\\n" +
                 "show_fps=" + values.showFps + "\\n";

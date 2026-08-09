@@ -40,6 +40,7 @@ public class PreviewActivity extends Activity {
     private int collapsedHeight;
     private int expandedHeight;
     private boolean sheetExpanded;
+    private boolean sheetMovedDuringDrag;
     private float dragStartY;
     private int dragStartHeight;
     private ValueAnimator sheetAnimator;
@@ -154,6 +155,7 @@ public class PreviewActivity extends Activity {
         dragZone.setGravity(Gravity.CENTER_HORIZONTAL);
         dragZone.setPadding(0, 0, 0, dp(6));
         dragZone.setOnTouchListener(this::onSheetDrag);
+        dragZone.setOnClickListener(v -> animateSheetTo(sheetExpanded ? collapsedHeight : expandedHeight));
 
         View handle = new View(this);
         handle.setBackgroundResource(R.drawable.bg_sheet_handle);
@@ -208,15 +210,57 @@ public class PreviewActivity extends Activity {
         ));
 
         speedValue = addPercentControl(settings, "Drop speed", 0, 200, values.speedPercent, value -> {
-            values = new RainSettings.Values(value, values.emojiCount, values.sizePercent, values.maxFps, values.showFps);
+            values = new RainSettings.Values(value, values.emojiCount, values.circleCount, values.diamondCount,
+                    values.sizePercent, values.maxFps, values.showFps);
             RainSettings.save(this, values);
             updateLabels();
         });
 
-        addEmojiCountControl(settings);
+        addCountControl(settings, "Number of emojis", "Original bitmap emoji assets",
+                values.emojiCount, value -> {
+                    values = new RainSettings.Values(
+                            values.speedPercent,
+                            value,
+                            values.circleCount,
+                            values.diamondCount,
+                            values.sizePercent,
+                            values.maxFps,
+                            values.showFps
+                    );
+                    RainSettings.save(this, values);
+                });
+
+        addCountControl(settings, "Generated circles", "Programmatic soft circle sprites",
+                values.circleCount, value -> {
+                    values = new RainSettings.Values(
+                            values.speedPercent,
+                            values.emojiCount,
+                            value,
+                            values.diamondCount,
+                            values.sizePercent,
+                            values.maxFps,
+                            values.showFps
+                    );
+                    RainSettings.save(this, values);
+                });
+
+        addCountControl(settings, "Generated diamonds", "Programmatic diamond sprites",
+                values.diamondCount, value -> {
+                    values = new RainSettings.Values(
+                            values.speedPercent,
+                            values.emojiCount,
+                            values.circleCount,
+                            value,
+                            values.sizePercent,
+                            values.maxFps,
+                            values.showFps
+                    );
+                    RainSettings.save(this, values);
+                });
 
         sizeValue = addPercentControl(settings, "Emoji size", 60, 170, values.sizePercent, value -> {
-            values = new RainSettings.Values(values.speedPercent, values.emojiCount, value, values.maxFps, values.showFps);
+            values = new RainSettings.Values(values.speedPercent, values.emojiCount, values.circleCount,
+                    values.diamondCount, value, values.maxFps, values.showFps);
             RainSettings.save(this, values);
             updateLabels();
         });
@@ -239,16 +283,21 @@ public class PreviewActivity extends Activity {
                 cancelSheetAnimation();
                 dragStartY = event.getRawY();
                 dragStartHeight = bottomSheetParams.height;
+                sheetMovedDuringDrag = false;
                 return true;
             case MotionEvent.ACTION_MOVE:
                 int target = dragStartHeight + Math.round(dragStartY - event.getRawY());
+                sheetMovedDuringDrag = sheetMovedDuringDrag || Math.abs(event.getRawY() - dragStartY) > dp(8);
                 setSheetHeight(clamp(target, collapsedHeight, expandedHeight));
                 return true;
             case MotionEvent.ACTION_UP:
             case MotionEvent.ACTION_CANCEL:
-                int midpoint = collapsedHeight + ((expandedHeight - collapsedHeight) / 2);
-                animateSheetTo(bottomSheetParams.height >= midpoint ? expandedHeight : collapsedHeight);
-                view.performClick();
+                if (sheetMovedDuringDrag) {
+                    int midpoint = collapsedHeight + ((expandedHeight - collapsedHeight) / 2);
+                    animateSheetTo(bottomSheetParams.height >= midpoint ? expandedHeight : collapsedHeight);
+                } else {
+                    view.performClick();
+                }
                 return true;
             default:
                 return false;
@@ -291,17 +340,18 @@ public class PreviewActivity extends Activity {
         return valueText;
     }
 
-    private void addEmojiCountControl(LinearLayout page) {
+    private void addCountControl(LinearLayout page, String titleText, String subtitleText,
+                                 int currentValue, IntChange onChange) {
         LinearLayout row = settingRow();
 
-        TextView title = titleText("Number of emojis", 20f);
+        TextView title = titleText(titleText, 20f);
         row.addView(title);
 
-        TextView subtitle = mutedText("Enter any whole number", 15f);
+        TextView subtitle = mutedText(subtitleText, 15f);
         row.addView(subtitle);
 
         EditText input = new EditText(this);
-        input.setText(String.valueOf(values.emojiCount));
+        input.setText(String.valueOf(currentValue));
         input.setSelectAllOnFocus(true);
         input.setSingleLine(true);
         input.setInputType(InputType.TYPE_CLASS_NUMBER);
@@ -320,7 +370,7 @@ public class PreviewActivity extends Activity {
             public void afterTextChanged(Editable editable) {
                 String raw = editable.toString().trim();
                 if (!raw.isEmpty()) {
-                    saveEmojiCount(raw);
+                    onChange.changed(parseCount(raw));
                 }
             }
         });
@@ -335,18 +385,7 @@ public class PreviewActivity extends Activity {
         addSettingRow(page, row);
     }
 
-    private void saveEmojiCount(String raw) {
-        values = new RainSettings.Values(
-                values.speedPercent,
-                parseEmojiCount(raw),
-                values.sizePercent,
-                values.maxFps,
-                values.showFps
-        );
-        RainSettings.save(this, values);
-    }
-
-    private int parseEmojiCount(String raw) {
+    private int parseCount(String raw) {
         try {
             return Integer.parseInt(raw);
         } catch (NumberFormatException ignored) {
@@ -365,6 +404,8 @@ public class PreviewActivity extends Activity {
             RainSettings.save(this, new RainSettings.Values(
                     RainSettings.DEFAULT_SPEED,
                     RainSettings.DEFAULT_EMOJI_COUNT,
+                    RainSettings.DEFAULT_CIRCLE_COUNT,
+                    RainSettings.DEFAULT_DIAMOND_COUNT,
                     RainSettings.DEFAULT_SIZE,
                     values.maxFps,
                     values.showFps

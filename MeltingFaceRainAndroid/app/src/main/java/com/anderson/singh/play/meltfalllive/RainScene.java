@@ -8,6 +8,9 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.Paint;
+import android.graphics.Path;
+import android.graphics.RadialGradient;
+import android.graphics.Shader;
 
 import java.util.ArrayList;
 import java.util.Random;
@@ -15,13 +18,19 @@ import java.util.Random;
 public final class RainScene {
     private static final float SPEED_SCALE = 0.5f;
     private static final float SIZE_SCALE = 1.3f;
+    private static final int KIND_EMOJI = 0;
+    private static final int KIND_CIRCLE = 1;
+    private static final int KIND_DIAMOND = 2;
+    private static final int EMOJI_SPRITE_COUNT = 8;
+    private static final int CIRCLE_SPRITE_INDEX = 8;
+    private static final int DIAMOND_SPRITE_INDEX = 9;
 
     private final Resources resources;
     private final Random random = new Random();
     private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Matrix matrix = new Matrix();
     private final ArrayList<Drop> drops = new ArrayList<>();
-    private final Bitmap[] emojis;
+    private final Bitmap[] sprites;
     private RainSettings.Values settings;
 
     private int width = 1;
@@ -34,7 +43,7 @@ public final class RainScene {
     public RainScene(Resources resources, RainSettings.Values settings) {
         this.resources = resources;
         this.settings = settings;
-        emojis = new Bitmap[] {
+        sprites = new Bitmap[] {
                 BitmapFactory.decodeResource(resources, R.drawable.melting_face_acid),
                 BitmapFactory.decodeResource(resources, R.drawable.melting_face_cyan),
                 BitmapFactory.decodeResource(resources, R.drawable.melting_face_hotred),
@@ -42,12 +51,16 @@ public final class RainScene {
                 BitmapFactory.decodeResource(resources, R.drawable.melting_face_orange),
                 BitmapFactory.decodeResource(resources, R.drawable.melting_face_pink),
                 BitmapFactory.decodeResource(resources, R.drawable.melting_face_violet),
-                BitmapFactory.decodeResource(resources, R.drawable.melting_face_yellow)
+                BitmapFactory.decodeResource(resources, R.drawable.melting_face_yellow),
+                createCircleSprite(),
+                createDiamondSprite()
         };
     }
 
     public void setSettings(RainSettings.Values settings) {
-        boolean countChanged = this.settings.emojiCount != settings.emojiCount;
+        boolean countChanged = this.settings.emojiCount != settings.emojiCount
+                || this.settings.circleCount != settings.circleCount
+                || this.settings.diamondCount != settings.diamondCount;
         this.settings = settings;
         if (countChanged) {
             updateDropCountForArea();
@@ -85,15 +98,15 @@ public final class RainScene {
             }
 
             paint.setAlpha((int) (drop.alpha * 255));
-            Bitmap emoji = emojis[drop.emojiIndex];
-            float scaleX = drop.size / emoji.getWidth();
-            float scaleY = drop.size / emoji.getHeight();
+            Bitmap sprite = sprites[drop.spriteIndex];
+            float scaleX = drop.size / sprite.getWidth();
+            float scaleY = drop.size / sprite.getHeight();
             matrix.reset();
-            matrix.postTranslate(-emoji.getWidth() / 2f, -emoji.getHeight() / 2f);
+            matrix.postTranslate(-sprite.getWidth() / 2f, -sprite.getHeight() / 2f);
             matrix.postScale(scaleX, scaleY);
             matrix.postRotate(drop.rotation);
             matrix.postTranslate(drop.x + drop.size / 2f, drop.y + drop.size / 2f);
-            canvas.drawBitmap(emoji, matrix, paint);
+            canvas.drawBitmap(sprite, matrix, paint);
         }
     }
 
@@ -106,7 +119,7 @@ public final class RainScene {
     }
 
     public Bitmap[] getEmojis() {
-        return emojis;
+        return sprites;
     }
 
     private void resetDrop(Drop drop, boolean initial) {
@@ -126,8 +139,8 @@ public final class RainScene {
         drop.drift = randomRange(-34f, 34f) * depth;
         drop.rotation = randomRange(0f, 360f);
         drop.spin = randomRange(-124f, 124f) * depth;
-        drop.alpha = 0.16f + depth * 0.84f;
-        drop.emojiIndex = random.nextInt(emojis.length);
+        drop.alpha = drop.kind == KIND_EMOJI ? 0.16f + depth * 0.84f : 0.28f + depth * 0.72f;
+        drop.spriteIndex = spriteIndexForKind(drop.kind);
     }
 
     private float randomRange(float min, float max) {
@@ -135,17 +148,95 @@ public final class RainScene {
     }
 
     private void updateDropCountForArea() {
-        int targetCount = settings.emojiCount;
+        updateKindCount(KIND_EMOJI, settings.emojiCount);
+        updateKindCount(KIND_CIRCLE, settings.circleCount);
+        updateKindCount(KIND_DIAMOND, settings.diamondCount);
+    }
 
-        while (drops.size() < targetCount) {
+    private void updateKindCount(int kind, int targetCount) {
+        int currentCount = countKind(kind);
+        while (currentCount < targetCount) {
             Drop drop = new Drop();
+            drop.kind = kind;
             drops.add(drop);
             resetDrop(drop, true);
+            currentCount++;
         }
 
-        while (drops.size() > targetCount) {
-            drops.remove(drops.size() - 1);
+        while (currentCount > targetCount) {
+            int index = lastIndexOfKind(kind);
+            if (index < 0) {
+                return;
+            }
+            drops.remove(index);
+            currentCount--;
         }
+    }
+
+    private int countKind(int kind) {
+        int count = 0;
+        for (Drop drop : drops) {
+            if (drop.kind == kind) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    private int lastIndexOfKind(int kind) {
+        for (int i = drops.size() - 1; i >= 0; i--) {
+            if (drops.get(i).kind == kind) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    private int spriteIndexForKind(int kind) {
+        if (kind == KIND_CIRCLE) {
+            return CIRCLE_SPRITE_INDEX;
+        }
+        if (kind == KIND_DIAMOND) {
+            return DIAMOND_SPRITE_INDEX;
+        }
+        return random.nextInt(EMOJI_SPRITE_COUNT);
+    }
+
+    private static Bitmap createCircleSprite() {
+        int size = 256;
+        float center = size / 2f;
+        Bitmap bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(bitmap);
+        Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        paint.setShader(new RadialGradient(center, center, center * 0.82f,
+                new int[] {
+                        Color.argb(235, 120, 255, 225),
+                        Color.argb(205, 36, 220, 170),
+                        Color.argb(0, 36, 220, 170)
+                },
+                new float[] {0f, 0.62f, 1f},
+                Shader.TileMode.CLAMP));
+        canvas.drawCircle(center, center, center * 0.78f, paint);
+        return bitmap;
+    }
+
+    private static Bitmap createDiamondSprite() {
+        int size = 256;
+        float center = size / 2f;
+        Bitmap bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(bitmap);
+        Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        paint.setColor(Color.argb(220, 255, 80, 220));
+        Path path = new Path();
+        path.moveTo(center, size * 0.08f);
+        path.lineTo(size * 0.92f, center);
+        path.lineTo(center, size * 0.92f);
+        path.lineTo(size * 0.08f, center);
+        path.close();
+        canvas.drawPath(path, paint);
+        paint.setColor(Color.argb(150, 255, 255, 255));
+        canvas.drawCircle(center, center, size * 0.16f, paint);
+        return bitmap;
     }
 
     static final class Drop {
@@ -157,6 +248,7 @@ public final class RainScene {
         float rotation;
         float spin;
         float alpha;
-        int emojiIndex;
+        int kind;
+        int spriteIndex;
     }
 }

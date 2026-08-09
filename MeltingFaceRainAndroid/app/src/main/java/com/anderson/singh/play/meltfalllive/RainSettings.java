@@ -8,12 +8,16 @@ public final class RainSettings {
     private static final String PREFS = "funky_face_rain_settings";
     private static final String SPEED = "speed_percent";
     private static final String EMOJI_COUNT = "emoji_count";
+    private static final String CIRCLE_COUNT = "circle_count";
+    private static final String DIAMOND_COUNT = "diamond_count";
     private static final String SIZE = "size_percent";
     private static final String FPS = "fps";
     private static final String SHOW_FPS = "show_fps";
 
     public static final int DEFAULT_SPEED = BuildConfig.DEFAULT_SPEED;
     public static final int DEFAULT_EMOJI_COUNT = BuildConfig.DEFAULT_EMOJI_COUNT;
+    public static final int DEFAULT_CIRCLE_COUNT = 0;
+    public static final int DEFAULT_DIAMOND_COUNT = 0;
     public static final int DEFAULT_SIZE = BuildConfig.DEFAULT_SIZE;
     public static final int DEFAULT_FPS = BuildConfig.DEFAULT_FPS;
     public static final boolean DEFAULT_SHOW_FPS = BuildConfig.DEFAULT_SHOW_FPS;
@@ -26,6 +30,8 @@ public final class RainSettings {
         return new Values(
                 prefs.getInt(SPEED, DEFAULT_SPEED),
                 prefs.getInt(EMOJI_COUNT, DEFAULT_EMOJI_COUNT),
+                prefs.getInt(CIRCLE_COUNT, DEFAULT_CIRCLE_COUNT),
+                prefs.getInt(DIAMOND_COUNT, DEFAULT_DIAMOND_COUNT),
                 prefs.getInt(SIZE, DEFAULT_SIZE),
                 prefs.getInt(FPS, DEFAULT_FPS),
                 prefs.getBoolean(SHOW_FPS, DEFAULT_SHOW_FPS)
@@ -37,6 +43,8 @@ public final class RainSettings {
                 .edit()
                 .putInt(SPEED, clamp(values.speedPercent, 0, 200))
                 .putInt(EMOJI_COUNT, values.emojiCount)
+                .putInt(CIRCLE_COUNT, values.circleCount)
+                .putInt(DIAMOND_COUNT, values.diamondCount)
                 .putInt(SIZE, clamp(values.sizePercent, 60, 170))
                 .putInt(FPS, values.maxFps)
                 .putBoolean(SHOW_FPS, values.showFps)
@@ -44,7 +52,8 @@ public final class RainSettings {
     }
 
     public static void reset(Context context) {
-        save(context, new Values(DEFAULT_SPEED, DEFAULT_EMOJI_COUNT, DEFAULT_SIZE, DEFAULT_FPS));
+        save(context, new Values(DEFAULT_SPEED, DEFAULT_EMOJI_COUNT, DEFAULT_CIRCLE_COUNT,
+                DEFAULT_DIAMOND_COUNT, DEFAULT_SIZE, DEFAULT_FPS));
     }
 
     public static boolean canShowFpsCounter(Context context) {
@@ -58,20 +67,40 @@ public final class RainSettings {
     public static final class Values {
         public final int speedPercent;
         public final int emojiCount;
+        public final int circleCount;
+        public final int diamondCount;
         public final int sizePercent;
         public final int maxFps;
         public final boolean showFps;
 
         public Values(int speedPercent, int emojiCount, int sizePercent, int maxFps) {
-            this(speedPercent, emojiCount, sizePercent, maxFps, DEFAULT_SHOW_FPS);
+            this(speedPercent, emojiCount, DEFAULT_CIRCLE_COUNT, DEFAULT_DIAMOND_COUNT,
+                    sizePercent, maxFps, DEFAULT_SHOW_FPS);
+        }
+
+        public Values(int speedPercent, int emojiCount, int circleCount, int diamondCount,
+                      int sizePercent, int maxFps) {
+            this(speedPercent, emojiCount, circleCount, diamondCount, sizePercent, maxFps, DEFAULT_SHOW_FPS);
         }
 
         public Values(int speedPercent, int emojiCount, int sizePercent, int maxFps, boolean showFps) {
+            this(speedPercent, emojiCount, DEFAULT_CIRCLE_COUNT, DEFAULT_DIAMOND_COUNT,
+                    sizePercent, maxFps, showFps);
+        }
+
+        public Values(int speedPercent, int emojiCount, int circleCount, int diamondCount,
+                      int sizePercent, int maxFps, boolean showFps) {
             this.speedPercent = clamp(speedPercent, 0, 200);
             this.emojiCount = Math.max(0, emojiCount);
+            this.circleCount = Math.max(0, circleCount);
+            this.diamondCount = Math.max(0, diamondCount);
             this.sizePercent = clamp(sizePercent, 60, 170);
             this.maxFps = normalizeFps(maxFps);
             this.showFps = showFps;
+        }
+
+        public int totalCount() {
+            return emojiCount + circleCount + diamondCount;
         }
 
         public float speedScale() {
