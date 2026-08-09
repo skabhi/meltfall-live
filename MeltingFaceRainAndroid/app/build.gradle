@@ -2,7 +2,9 @@ plugins {
     id "com.android.application"
 }
 
-def versionFile = rootProject.file("../VERSION")
+import org.gradle.api.tasks.compile.JavaCompile
+
+def versionFile = rootProject.file("VERSION")
 def meltfallVersionName = versionFile.exists() ? versionFile.text.trim() : "1.0.0"
 def meltfallVersionParts = meltfallVersionName.tokenize(".").collect { it as int }
 while (meltfallVersionParts.size() < 3) {
@@ -10,7 +12,7 @@ while (meltfallVersionParts.size() < 3) {
 }
 def meltfallVersionCode = meltfallVersionParts[0] * 10000 + meltfallVersionParts[1] * 100 + meltfallVersionParts[2]
 
-def defaultsFile = rootProject.file("../config/defaults.properties")
+def defaultsFile = rootProject.file("config/defaults.properties")
 def defaults = new Properties()
 if (defaultsFile.exists()) {
     defaultsFile.withInputStream { stream -> defaults.load(stream) }
@@ -62,6 +64,7 @@ def defaultShowFps = boolDefault("show_fps", false)
 android {
     namespace "com.anderson.singh.play.meltfalllive"
     compileSdk 35
+    buildToolsVersion "35.0.0"
 
     buildFeatures {
         buildConfig true
@@ -80,4 +83,8 @@ android {
         buildConfigField "int", "DEFAULT_FPS", defaultFps.toString()
         buildConfigField "boolean", "DEFAULT_SHOW_FPS", defaultShowFps.toString()
     }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.compilerArgs << "-Xlint:deprecation"
 }

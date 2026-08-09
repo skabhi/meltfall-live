@@ -10,7 +10,7 @@ instructions are in the repository root [README.md](../README.md).
 Quick build from the repository root:
 
 ```powershell
-.\gradlew.bat -p .\MeltingFaceRainAndroid assembleDebug
+.\gradlew.bat assembleDebug
 ```
 
 Generated APK:
@@ -25,7 +25,7 @@ Important pinned requirements:
 - Android SDK Platform 35
 - Android Build Tools 35.0.0
 - Android Gradle Plugin 8.7.3
-- Gradle 8.10.2 through the committed root Gradle Wrapper
+- Gradle 8.10.2 through the committed repository-root Gradle Wrapper
 
 Release defaults are read from:
 
