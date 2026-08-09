@@ -16,4 +16,3 @@ dependencyResolutionManagement {
 
 rootProject.name = "MeltingFaceRainAndroid"
 include ":app"
-project(":app").projectDir = file("MeltingFaceRainAndroid/app")

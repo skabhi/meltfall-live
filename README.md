@@ -11,19 +11,6 @@ desktop artifacts, but current development is focused on Android.
 
 Abhishek Kumar Singh
 
-## Table Of Contents
-
-- [License Notice](#license-notice)
-- [Current Android Build](#current-android-build)
-- [Project Layout](#project-layout)
-- [Set Up On A New Windows Computer](#set-up-on-a-new-windows-computer)
-- [Build Android APK](#build-android-apk)
-- [Install On Android Phone](#install-on-android-phone)
-- [Tune Release Defaults](#tune-release-defaults)
-- [Reproducibility Rules](#reproducibility-rules)
-- [Troubleshooting](#troubleshooting)
-- [Development Workflow](#development-workflow)
-
 ## License Notice
 
 This repository is public for viewing only. No permission is granted to use,
@@ -54,8 +41,7 @@ The Android Gradle build reads [VERSION](VERSION) and derives `versionName` and
 
 ## Project Layout
 
-- `settings.gradle` and `build.gradle` - root Gradle project opened by Android Studio.
-- `MeltingFaceRainAndroid/` - primary Android app module folder.
+- `MeltingFaceRainAndroid/` - primary Android live wallpaper project.
 - `gradlew` and `gradlew.bat` - committed Gradle Wrapper entry points.
 - `gradle/wrapper/` - Gradle Wrapper JAR and pinned distribution properties.
 - `config/defaults.properties` - editable Android release defaults.
@@ -81,7 +67,7 @@ cd meltfall-live
 ```
 
 After this, the repository root is the folder that contains `README.md`,
-`settings.gradle`, `gradlew.bat`, and `MeltingFaceRainAndroid`.
+`gradlew.bat`, and `MeltingFaceRainAndroid`.
 
 ### Path A: Android Studio Setup
 
@@ -93,9 +79,6 @@ After this, the repository root is the folder that contains `README.md`,
 3. Install or select **JDK 17**:
    - In recent Android Studio versions, the bundled JDK may be usable.
    - If selecting a JDK manually, choose a JDK 17 install.
-   - Downloaded JDK archives commonly extract to a versioned folder such as
-     `C:\Android\jdk-17.0.x`; use the folder that directly contains
-     `bin\java.exe`.
    - Keep the project on JDK 17 until the project deliberately upgrades.
 
 4. Install Android SDK components:
@@ -106,14 +89,13 @@ After this, the repository root is the folder that contains `README.md`,
      - **Android SDK Platform-Tools**
      - **Android SDK Command-line Tools latest**
 
-5. Open the repository root in Android Studio:
+5. Open this project directory in Android Studio:
 
 ```text
-meltfall-live
+MeltingFaceRainAndroid
 ```
 
-6. Let Android Studio sync Gradle. Android Studio should use the committed
-   wrapper at `gradlew` / `gradlew.bat`.
+6. Let Android Studio sync Gradle.
 
 7. Build the debug APK from Android Studio:
    - Select **Build > Make Project**, or
@@ -137,12 +119,11 @@ Official downloads:
 Example install locations used below:
 
 ```text
-C:\Android\jdk-17.0.x
+C:\Android\jdk-17
 C:\Android\sdk
 ```
 
-Your `JAVA_HOME` folder must be the extracted JDK directory that directly
-contains `bin\java.exe`. It does not have to be named exactly `jdk-17`.
+Your JDK folder must contain `bin\java.exe`.
 
 The Android command-line tools ZIP must be extracted into this exact layout:
 
@@ -153,18 +134,16 @@ C:\Android\sdk\cmdline-tools\latest\bin\sdkmanager.bat
 If the ZIP extracts to a folder named `cmdline-tools`, create `latest` yourself
 and move the extracted contents under it.
 
-Environment variable assignments can run from any PowerShell directory.
+Working directory for these commands: repository root.
 
 ```powershell
-$env:JAVA_HOME="C:\Android\jdk-17.0.x"
+$env:JAVA_HOME="C:\Android\jdk-17"
 $env:ANDROID_HOME="C:\Android\sdk"
 $env:ANDROID_SDK_ROOT=$env:ANDROID_HOME
 $env:Path="$env:JAVA_HOME\bin;$env:ANDROID_HOME\cmdline-tools\latest\bin;$env:ANDROID_HOME\platform-tools;$env:Path"
 ```
 
-After `PATH` is configured, `java`, `sdkmanager`, and `adb` verification can
-run from any PowerShell directory. The Gradle Wrapper command must run from the
-repository root.
+Verify the tools:
 
 ```powershell
 java -version
@@ -194,7 +173,7 @@ adb version
 Primary command. Working directory: repository root.
 
 ```powershell
-.\gradlew.bat assembleDebug
+.\gradlew.bat -p .\MeltingFaceRainAndroid assembleDebug
 ```
 
 The generated APK is:
@@ -260,9 +239,7 @@ commit the change, then build the release AAB.
 - Do not replace it with the latest globally installed Gradle.
 - The wrapper pins Gradle `8.10.2` even if newer Gradle versions exist.
 - JDK 17 and SDK 35 are pinned requirements until deliberately upgraded.
-- Android Gradle Plugin `8.7.3` is declared in the root `build.gradle`.
-- Android Build Tools `35.0.0` is explicitly selected in
-  `MeltingFaceRainAndroid\app\build.gradle`.
+- Android Gradle Plugin `8.7.3` is declared in `MeltingFaceRainAndroid\build.gradle`.
 - The wrapper distribution checksum is stored in
   `gradle\wrapper\gradle-wrapper.properties`.
 
@@ -277,7 +254,7 @@ users should follow the Android Studio or command-line setup above.
 Install JDK 17 and set `JAVA_HOME`. Working directory does not matter.
 
 ```powershell
-$env:JAVA_HOME="C:\Android\jdk-17.0.x"
+$env:JAVA_HOME="C:\Android\jdk-17"
 $env:Path="$env:JAVA_HOME\bin;$env:Path"
 java -version
 ```
@@ -297,13 +274,13 @@ Do not use a global `gradle` command. From the repository root, use:
 Correct:
 
 ```text
-C:\Android\jdk-17.0.x
+C:\Android\jdk-17
 ```
 
 Incorrect:
 
 ```text
-C:\Android\jdk-17.0.x\bin
+C:\Android\jdk-17\bin
 ```
 
 ### SDK location not found
@@ -314,7 +291,7 @@ Working directory: repository root.
 ```powershell
 $env:ANDROID_HOME="C:\Android\sdk"
 $env:ANDROID_SDK_ROOT=$env:ANDROID_HOME
-.\gradlew.bat assembleDebug
+.\gradlew.bat -p .\MeltingFaceRainAndroid assembleDebug
 ```
 
 ### SDK licenses not accepted
@@ -373,7 +350,7 @@ root. For explicit paths with spaces, quote them:
 
 ```powershell
 $env:JAVA_HOME="C:\Program Files\Java\jdk-17"
-& ".\gradlew.bat" assembleDebug
+& ".\gradlew.bat" -p ".\MeltingFaceRainAndroid" assembleDebug
 ```
 
 ### Clean Rebuild
@@ -381,7 +358,7 @@ $env:JAVA_HOME="C:\Program Files\Java\jdk-17"
 Working directory: repository root.
 
 ```powershell
-.\gradlew.bat clean assembleDebug
+.\gradlew.bat -p .\MeltingFaceRainAndroid clean assembleDebug
 ```
 
 ## Use The Android App

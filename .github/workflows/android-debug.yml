@@ -26,24 +26,11 @@ jobs:
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Verify Gradle Wrapper is executable
-        run: test -x ./gradlew
-
       - name: Install Android SDK packages
         run: sdkmanager "platforms;android-35" "build-tools;35.0.0" "platform-tools"
 
-      - name: List installed Android SDK packages
-        run: sdkmanager --list_installed
-
       - name: Build debug APK
-        run: ./gradlew assembleDebug
+        run: ./gradlew -p ./MeltingFaceRainAndroid assembleDebug
 
       - name: Verify APK exists
         run: test -f MeltingFaceRainAndroid/app/build/outputs/apk/debug/app-debug.apk
-
-      - name: Upload debug APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: meltfall-live-debug-apk
-          path: MeltingFaceRainAndroid/app/build/outputs/apk/debug/app-debug.apk
-          if-no-files-found: error
