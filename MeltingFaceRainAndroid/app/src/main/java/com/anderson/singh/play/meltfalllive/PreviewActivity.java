@@ -31,6 +31,8 @@ public class PreviewActivity extends Activity {
 
     private LinearLayout topBar;
     private LinearLayout bottomSheet;
+    private CheckBox previewToggle;
+    private FrameLayout root;
     private FrameLayout.LayoutParams bottomSheetParams;
     private RainSettings.Values values;
     private TextView speedValue;
@@ -52,7 +54,12 @@ public class PreviewActivity extends Activity {
         collapsedHeight = dp(218);
         expandedHeight = dp(620);
 
-        FrameLayout root = new FrameLayout(this);
+        root = new FrameLayout(this);
+        root.setOnClickListener(v -> {
+            if (previewToggle != null && previewToggle.isChecked()) {
+                previewToggle.setChecked(false);
+            }
+        });
         root.addView(new RainView(this), new FrameLayout.LayoutParams(
                 FrameLayout.LayoutParams.MATCH_PARENT,
                 FrameLayout.LayoutParams.MATCH_PARENT
@@ -125,13 +132,13 @@ public class PreviewActivity extends Activity {
         View space = new View(this);
         bar.addView(space, new LinearLayout.LayoutParams(0, 1, 1f));
 
-        CheckBox preview = new CheckBox(this);
-        preview.setText("Preview");
-        preview.setTextColor(Color.WHITE);
-        preview.setTextSize(20f);
-        preview.setButtonTintList(ColorStateList.valueOf(Color.WHITE));
-        preview.setOnCheckedChangeListener(this::onPreviewChanged);
-        bar.addView(preview);
+        previewToggle = new CheckBox(this);
+        previewToggle.setText("Preview");
+        previewToggle.setTextColor(Color.WHITE);
+        previewToggle.setTextSize(20f);
+        previewToggle.setButtonTintList(ColorStateList.valueOf(Color.WHITE));
+        previewToggle.setOnCheckedChangeListener(this::onPreviewChanged);
+        bar.addView(previewToggle);
 
         return bar;
     }
