@@ -4,83 +4,176 @@ Meltfall Live is mainly an Android live wallpaper app. It renders colorful
 melting-face emojis raining down the screen with depth, scale, speed, and
 brightness variation.
 
-The repository also keeps the earlier Windows/PowerShell versions as secondary
+The repository also keeps earlier Windows/PowerShell versions as secondary
 desktop artifacts, but current development is focused on Android.
 
 ## Author
 
 Abhishek Kumar Singh
 
-## Current Version
-
-The current project and Android app version is tracked in [VERSION](VERSION).
-The Android Gradle build reads this file and derives the APK `versionName` and
-`versionCode` from it, so future version bumps should update `VERSION` first.
-
-## Project Layout
-
-- `MeltingFaceRainAndroid/` - primary Android live wallpaper project.
-- `config/defaults.properties` - editable Android release defaults.
-- `dist/android/MeltfallLiveAndroid-debug.apk` - latest debug APK artifact.
-- `assets/` - shared source images and funky PNG variants.
-- `windows/powershell/` - Windows WPF PowerShell scripts.
-- `windows/exe/` - Windows executable sources, icons, and built `.exe` files.
-- `archive/` and `experiments/` - older prototypes and experimental assets.
-
-## License
+## License Notice
 
 This repository is public for viewing only. No permission is granted to use,
 copy, modify, distribute, or create derivative works from this code or assets.
 See [LICENSE](LICENSE).
 
-## Set Up On A New Computer
+That creates an intentional tension with the build instructions below: the
+instructions document how the owner can reproduce the build and how reviewers
+can inspect it, but the license does not currently grant third parties
+permission to clone, copy, build, redistribute, or modify the app. The owner
+should decide later whether to keep this view-only license or switch to a
+license that permits outside use/contribution.
 
-1. Install Git.
+## Current Android Build
 
-2. Clone the repository:
+- Package: `com.anderson.singh.play.meltfalllive`
+- Version source: [VERSION](VERSION)
+- Current version: `1.1.0`
+- Current `versionCode`: `10100`
+- Android Gradle Plugin: `8.7.3`
+- Gradle: `8.10.2`, pinned by the committed Gradle Wrapper
+- JDK: `17`
+- Compile SDK: `35`
+- Android Build Tools: `35.0.0`
 
-```powershell
-git clone git@github.com:skabhi/meltfall-live.git
-cd meltfall-live
-```
+The Android Gradle build reads [VERSION](VERSION) and derives `versionName` and
+`versionCode` from it.
 
-If SSH is not set up on the new computer yet, add an SSH key to GitHub first,
-or clone with HTTPS:
+## Project Layout
+
+- `MeltingFaceRainAndroid/` - primary Android live wallpaper project.
+- `gradlew` and `gradlew.bat` - committed Gradle Wrapper entry points.
+- `gradle/wrapper/` - Gradle Wrapper JAR and pinned distribution properties.
+- `config/defaults.properties` - editable Android release defaults.
+- `dist/android/MeltfallLiveAndroid-debug.apk` - optional checked-in debug APK artifact.
+- `assets/` - shared source images and funky PNG variants.
+- `windows/powershell/` - Windows WPF PowerShell scripts.
+- `windows/exe/` - Windows executable sources, icons, and built `.exe` files.
+- `archive/` and `experiments/` - older prototypes and experimental assets.
+
+## Set Up On A New Windows Computer
+
+Use **one** of these setup paths. Android Studio is easier. Command-line-only is
+more explicit and closer to CI.
+
+### Clone The Repository
+
+Working directory for these commands: any folder where you keep projects, for
+example `C:\Users\You\Documents`.
 
 ```powershell
 git clone https://github.com/skabhi/meltfall-live.git
 cd meltfall-live
 ```
 
-3. Install Android Studio, or install a local command-line Android toolchain:
+After this, the repository root is the folder that contains `README.md`,
+`gradlew.bat`, and `MeltingFaceRainAndroid`.
 
-- JDK 17
-- Android SDK with platform SDK 35
-- Android build tools
-- Gradle 8.10.2, or use Android Studio's bundled Gradle support
+### Path A: Android Studio Setup
 
-4. If using command-line builds, set these environment variables for the current
-PowerShell session. Adjust paths to match your computer:
+1. Install Android Studio from the official Android Developers page:
+   <https://developer.android.com/studio>
+
+2. Open Android Studio.
+
+3. Install or select **JDK 17**:
+   - In recent Android Studio versions, the bundled JDK may be usable.
+   - If selecting a JDK manually, choose a JDK 17 install.
+   - Keep the project on JDK 17 until the project deliberately upgrades.
+
+4. Install Android SDK components:
+   - Open **Tools > SDK Manager**.
+   - In **SDK Platforms**, install **Android 15 / API 35**.
+   - In **SDK Tools**, enable **Show Package Details** and install:
+     - **Android SDK Build-Tools 35.0.0**
+     - **Android SDK Platform-Tools**
+     - **Android SDK Command-line Tools latest**
+
+5. Open this project directory in Android Studio:
+
+```text
+MeltingFaceRainAndroid
+```
+
+6. Let Android Studio sync Gradle.
+
+7. Build the debug APK from Android Studio:
+   - Select **Build > Make Project**, or
+   - Open the Gradle tool window and run `:app:assembleDebug`.
+
+8. The generated APK is:
+
+```text
+MeltingFaceRainAndroid\app\build\outputs\apk\debug\app-debug.apk
+```
+
+### Path B: Command-Line-Only Setup
+
+Use this path if you do not want Android Studio.
+
+Official downloads:
+
+- JDK 17: <https://learn.microsoft.com/en-us/java/openjdk/download>
+- Android SDK Command-line Tools: <https://developer.android.com/studio#command-tools>
+
+Example install locations used below:
+
+```text
+C:\Android\jdk-17
+C:\Android\sdk
+```
+
+Your JDK folder must contain `bin\java.exe`.
+
+The Android command-line tools ZIP must be extracted into this exact layout:
+
+```text
+C:\Android\sdk\cmdline-tools\latest\bin\sdkmanager.bat
+```
+
+If the ZIP extracts to a folder named `cmdline-tools`, create `latest` yourself
+and move the extracted contents under it.
+
+Working directory for these commands: repository root.
 
 ```powershell
-$env:JAVA_HOME="C:\Path\To\jdk-17"
-$env:ANDROID_HOME="C:\Path\To\Android\sdk"
+$env:JAVA_HOME="C:\Android\jdk-17"
+$env:ANDROID_HOME="C:\Android\sdk"
 $env:ANDROID_SDK_ROOT=$env:ANDROID_HOME
+$env:Path="$env:JAVA_HOME\bin;$env:ANDROID_HOME\cmdline-tools\latest\bin;$env:ANDROID_HOME\platform-tools;$env:Path"
+```
+
+Verify the tools:
+
+```powershell
+java -version
+sdkmanager --version
+.\gradlew.bat --version
+```
+
+Install SDK packages:
+
+```powershell
+sdkmanager --licenses
+sdkmanager "platforms;android-35" "build-tools;35.0.0" "platform-tools"
+```
+
+You must personally review and accept the Android SDK license prompts shown by
+`sdkmanager --licenses`. Do not automate acceptance unless you understand and
+accept those license terms.
+
+Verify ADB after installing Platform Tools:
+
+```powershell
+adb version
 ```
 
 ## Build Android APK
 
-From the repository root:
+Primary command. Working directory: repository root.
 
 ```powershell
-.\android-build-deps\gradle-8.10.2\bin\gradle.bat -p .\MeltingFaceRainAndroid assembleDebug
-```
-
-On a fresh computer where `android-build-deps/` is not present, use an installed
-Gradle instead:
-
-```powershell
-gradle -p .\MeltingFaceRainAndroid assembleDebug
+.\gradlew.bat -p .\MeltingFaceRainAndroid assembleDebug
 ```
 
 The generated APK is:
@@ -89,16 +182,40 @@ The generated APK is:
 MeltingFaceRainAndroid\app\build\outputs\apk\debug\app-debug.apk
 ```
 
-To refresh the debug APK artifact:
+Optional: refresh the checked-in debug artifact after a successful build.
+Working directory: repository root.
 
 ```powershell
 Copy-Item -LiteralPath .\MeltingFaceRainAndroid\app\build\outputs\apk\debug\app-debug.apk -Destination .\dist\android\MeltfallLiveAndroid-debug.apk -Force
 ```
 
+## Install On Android Phone
+
+1. Enable Developer options on the phone.
+2. Enable USB debugging.
+3. Connect the phone by USB.
+4. Approve the USB debugging prompt on the phone.
+
+Working directory: repository root.
+
+```powershell
+adb devices
+adb install -r .\MeltingFaceRainAndroid\app\build\outputs\apk\debug\app-debug.apk
+```
+
+If `adb` is not on `PATH`, use the full path:
+
+```powershell
+& "C:\Android\sdk\platform-tools\adb.exe" devices
+& "C:\Android\sdk\platform-tools\adb.exe" install -r .\MeltingFaceRainAndroid\app\build\outputs\apk\debug\app-debug.apk
+```
+
 ## Tune Release Defaults
 
 Release defaults are stored in [config/defaults.properties](config/defaults.properties).
-Open it in Notepad before building a release:
+Open it in Notepad before building a release.
+
+Working directory: repository root.
 
 ```powershell
 notepad .\config\defaults.properties
@@ -116,28 +233,132 @@ The debug app also has a developer-only helper that copies the current phone
 settings in `defaults.properties` format. Paste those values into this file,
 commit the change, then build the release AAB.
 
-## Install On Android Phone
+## Reproducibility Rules
 
-1. Enable Developer options on the phone.
-2. Enable USB debugging.
-3. Connect the phone by USB.
-4. Approve the USB debugging prompt on the phone.
-5. Verify ADB sees the phone:
+- Use the committed Gradle Wrapper: `.\gradlew.bat`.
+- Do not replace it with the latest globally installed Gradle.
+- The wrapper pins Gradle `8.10.2` even if newer Gradle versions exist.
+- JDK 17 and SDK 35 are pinned requirements until deliberately upgraded.
+- Android Gradle Plugin `8.7.3` is declared in `MeltingFaceRainAndroid\build.gradle`.
+- The wrapper distribution checksum is stored in
+  `gradle\wrapper\gradle-wrapper.properties`.
+
+The private/local `android-build-deps/` folder is ignored by Git and is not part
+of a fresh clone. It may exist on the original development machine, but normal
+users should follow the Android Studio or command-line setup above.
+
+## Troubleshooting
+
+### `java` command not found
+
+Install JDK 17 and set `JAVA_HOME`. Working directory does not matter.
 
 ```powershell
+$env:JAVA_HOME="C:\Android\jdk-17"
+$env:Path="$env:JAVA_HOME\bin;$env:Path"
+java -version
+```
+
+### `gradle` command not found
+
+Do not use a global `gradle` command. From the repository root, use:
+
+```powershell
+.\gradlew.bat --version
+```
+
+### `JAVA_HOME` is incorrect
+
+`JAVA_HOME` must point to the JDK folder, not the `bin` folder.
+
+Correct:
+
+```text
+C:\Android\jdk-17
+```
+
+Incorrect:
+
+```text
+C:\Android\jdk-17\bin
+```
+
+### SDK location not found
+
+Set `ANDROID_HOME` and `ANDROID_SDK_ROOT` for the current PowerShell session.
+Working directory: repository root.
+
+```powershell
+$env:ANDROID_HOME="C:\Android\sdk"
+$env:ANDROID_SDK_ROOT=$env:ANDROID_HOME
+.\gradlew.bat -p .\MeltingFaceRainAndroid assembleDebug
+```
+
+### SDK licenses not accepted
+
+Run:
+
+```powershell
+sdkmanager --licenses
+```
+
+Review and accept the licenses you agree to, then build again.
+
+### Compile SDK 35 missing
+
+Install the required SDK packages:
+
+```powershell
+sdkmanager "platforms;android-35" "build-tools;35.0.0" "platform-tools"
+```
+
+### `adb` not found
+
+Add Platform Tools to `PATH` or call `adb.exe` by full path:
+
+```powershell
+$env:Path="$env:ANDROID_HOME\platform-tools;$env:Path"
+adb version
+```
+
+### Device shows as unauthorized
+
+Unlock the phone, approve the USB debugging prompt, then run:
+
+```powershell
+adb kill-server
+adb start-server
 adb devices
 ```
 
-6. Install the debug APK:
+### Gradle or Android Gradle Plugin incompatibility
+
+Use the wrapper and JDK 17:
 
 ```powershell
-adb install -r .\dist\android\MeltfallLiveAndroid-debug.apk
+.\gradlew.bat --version
+java -version
 ```
 
-If ADB is not on `PATH`, use the full path to `adb.exe`, for example:
+Do not upgrade Gradle, AGP, JDK, or SDK levels unless doing a deliberate project
+upgrade.
+
+### Paths Containing Spaces
+
+PowerShell handles this repository path if commands are run from the repository
+root. For explicit paths with spaces, quote them:
 
 ```powershell
-& "C:\Path\To\Android\sdk\platform-tools\adb.exe" install -r .\dist\android\MeltfallLiveAndroid-debug.apk
+$env:JAVA_HOME="C:\Program Files\Java\jdk-17"
+& ".\gradlew.bat" -p ".\MeltingFaceRainAndroid" assembleDebug
+```
+
+### Clean Rebuild
+
+Working directory: repository root.
+
+```powershell
+.\gradlew.bat -p .\MeltingFaceRainAndroid clean assembleDebug
 ```
 
 ## Use The Android App
@@ -155,7 +376,7 @@ developer-only options such as the rendered FPS counter and FPS limit.
 
 ## Windows Desktop Artifacts
 
-The Windows scripts remain usable directly:
+The Windows scripts remain usable directly. Working directory: repository root.
 
 ```powershell
 powershell.exe -STA -ExecutionPolicy Bypass -File .\windows\powershell\melting_face_wpf.ps1 -ImagePath .\assets\melting_face_transparent.png
@@ -167,7 +388,7 @@ C# compiler and WPF assemblies available on Windows.
 
 ## Development Workflow
 
-After each completed change:
+Working directory: repository root.
 
 ```powershell
 git status
