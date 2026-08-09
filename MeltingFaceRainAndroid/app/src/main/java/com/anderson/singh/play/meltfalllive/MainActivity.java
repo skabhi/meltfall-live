@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.view.Gravity;
+import android.view.View;
 import android.view.Window;
 import android.widget.Button;
 import android.widget.ImageButton;
@@ -104,27 +105,22 @@ public class MainActivity extends Activity {
 
         FrameLayout preview = new FrameLayout(this);
         preview.setBackgroundResource(R.drawable.bg_preview);
-        preview.setClipToOutline(false);
+        preview.setClipToOutline(true);
 
-        ImageView icon = new ImageView(this);
-        icon.setImageResource(R.drawable.melting_face_cyan);
-        icon.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
-        FrameLayout.LayoutParams iconParams = new FrameLayout.LayoutParams(
-                dp(portrait ? 154 : 138),
-                dp(portrait ? 154 : 138),
-                Gravity.CENTER
-        );
-        preview.addView(icon, iconParams);
+        ImageView previewImage = new ImageView(this);
+        previewImage.setImageResource(R.drawable.wallpaper_preview);
+        previewImage.setScaleType(ImageView.ScaleType.CENTER_CROP);
+        preview.addView(previewImage, new FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.MATCH_PARENT,
+                FrameLayout.LayoutParams.MATCH_PARENT
+        ));
 
-        TextView chip = new TextView(this);
-        chip.setText("Funky");
-        chip.setTextColor(Color.rgb(224, 255, 245));
-        chip.setTextSize(13f);
-        chip.setGravity(Gravity.CENTER);
-        chip.setBackgroundResource(R.drawable.bg_chip);
-        FrameLayout.LayoutParams chipParams = new FrameLayout.LayoutParams(dp(92), dp(36), Gravity.TOP | Gravity.RIGHT);
-        chipParams.setMargins(0, dp(14), dp(14), 0);
-        preview.addView(chip, chipParams);
+        View previewShade = new View(this);
+        previewShade.setBackgroundColor(Color.argb(24, 0, 0, 0));
+        preview.addView(previewShade, new FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.MATCH_PARENT,
+                FrameLayout.LayoutParams.MATCH_PARENT
+        ));
 
         LinearLayout.LayoutParams previewParams = new LinearLayout.LayoutParams(
                 portrait ? LinearLayout.LayoutParams.MATCH_PARENT : dp(250),
