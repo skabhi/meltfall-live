@@ -337,6 +337,7 @@ final class GlRainRenderer {
                     + "out vec4 fragColor;\n"
                     + "void main() {\n"
                     + "  vec4 color = texture(uTexture, vUv);\n"
+                    + "  if (color.a < 0.02) discard;\n"
                     + "  fragColor = vec4(color.rgb, color.a * vAlpha);\n"
                     + "}\n";
 
