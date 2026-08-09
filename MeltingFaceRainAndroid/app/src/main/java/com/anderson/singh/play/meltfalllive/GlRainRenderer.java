@@ -34,11 +34,15 @@ final class GlRainRenderer {
     private int uvRectHandle;
     private int resolutionHandle;
     private int textureHandle;
+    private int vertexArrayId;
+    private int quadBufferId;
+    private int instanceBufferId;
     private int width;
     private int height;
     private AtlasEntry[] atlasEntries;
     private final FloatBuffer quadBuffer = allocateQuadBuffer();
     private FloatBuffer instanceBuffer = allocateBuffer(256);
+    private int gpuInstanceCapacityFloats;
 
     GlRainRenderer(Context context) {
         this.context = context.getApplicationContext();
@@ -57,6 +61,7 @@ final class GlRainRenderer {
         Atlas atlas = createAtlasTexture(scene.getEmojis());
         textureId = atlas.textureId;
         atlasEntries = atlas.entries;
+        createVertexBuffers();
 
         GLES20.glDisable(GLES20.GL_DEPTH_TEST);
         GLES20.glEnable(GLES20.GL_BLEND);
@@ -82,10 +87,11 @@ final class GlRainRenderer {
         scene.update(elapsedSeconds);
 
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
-        int vertexCount = writeVertices();
-        if (vertexCount == 0) {
+        int instanceCount = writeVertices();
+        if (instanceCount == 0) {
             return;
         }
+        uploadInstances(instanceCount);
 
         GLES20.glUseProgram(program);
         GLES20.glUniform2f(resolutionHandle, width, height);
@@ -93,35 +99,9 @@ final class GlRainRenderer {
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, textureId);
         GLES20.glUniform1i(textureHandle, 0);
 
-        quadBuffer.position(0);
-        GLES20.glVertexAttribPointer(cornerHandle, 2, GLES20.GL_FLOAT, false,
-                FLOATS_PER_QUAD_VERTEX * 4, quadBuffer);
-        GLES20.glEnableVertexAttribArray(cornerHandle);
-
-        quadBuffer.position(2);
-        GLES20.glVertexAttribPointer(uvCornerHandle, 2, GLES20.GL_FLOAT, false,
-                FLOATS_PER_QUAD_VERTEX * 4, quadBuffer);
-        GLES20.glEnableVertexAttribArray(uvCornerHandle);
-
-        instanceBuffer.position(0);
-        GLES20.glVertexAttribPointer(centerDrawSizeHandle, 4, GLES20.GL_FLOAT, false,
-                FLOATS_PER_INSTANCE * 4, instanceBuffer);
-        GLES20.glEnableVertexAttribArray(centerDrawSizeHandle);
-        GLES30.glVertexAttribDivisor(centerDrawSizeHandle, 1);
-
-        instanceBuffer.position(4);
-        GLES20.glVertexAttribPointer(alphaRotationHandle, 4, GLES20.GL_FLOAT, false,
-                FLOATS_PER_INSTANCE * 4, instanceBuffer);
-        GLES20.glEnableVertexAttribArray(alphaRotationHandle);
-        GLES30.glVertexAttribDivisor(alphaRotationHandle, 1);
-
-        instanceBuffer.position(8);
-        GLES20.glVertexAttribPointer(uvRectHandle, 4, GLES20.GL_FLOAT, false,
-                FLOATS_PER_INSTANCE * 4, instanceBuffer);
-        GLES20.glEnableVertexAttribArray(uvRectHandle);
-        GLES30.glVertexAttribDivisor(uvRectHandle, 1);
-
-        GLES30.glDrawArraysInstanced(GLES20.GL_TRIANGLES, 0, QUAD_VERTICES, vertexCount);
+        GLES30.glBindVertexArray(vertexArrayId);
+        GLES30.glDrawArraysInstanced(GLES20.GL_TRIANGLES, 0, QUAD_VERTICES, instanceCount);
+        GLES30.glBindVertexArray(0);
     }
 
     int getDropCount() {
@@ -139,6 +119,7 @@ final class GlRainRenderer {
         int requiredFloats = Math.max(1, visibleDrops * FLOATS_PER_INSTANCE);
         if (instanceBuffer.capacity() < requiredFloats) {
             instanceBuffer = allocateBuffer(requiredFloats);
+            ensureGpuInstanceCapacity(requiredFloats);
         }
 
         instanceBuffer.clear();
@@ -184,6 +165,72 @@ final class GlRainRenderer {
         instanceBuffer.put(entry.v);
         instanceBuffer.put(entry.uSize);
         instanceBuffer.put(entry.vSize);
+    }
+
+    private void createVertexBuffers() {
+        int[] vertexArrays = new int[1];
+        GLES30.glGenVertexArrays(1, vertexArrays, 0);
+        vertexArrayId = vertexArrays[0];
+
+        int[] buffers = new int[2];
+        GLES20.glGenBuffers(2, buffers, 0);
+        quadBufferId = buffers[0];
+        instanceBufferId = buffers[1];
+
+        GLES30.glBindVertexArray(vertexArrayId);
+
+        GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, quadBufferId);
+        quadBuffer.position(0);
+        GLES20.glBufferData(GLES20.GL_ARRAY_BUFFER,
+                quadBuffer.capacity() * 4, quadBuffer, GLES20.GL_STATIC_DRAW);
+        GLES20.glVertexAttribPointer(cornerHandle, 2, GLES20.GL_FLOAT, false,
+                FLOATS_PER_QUAD_VERTEX * 4, 0);
+        GLES20.glEnableVertexAttribArray(cornerHandle);
+        GLES20.glVertexAttribPointer(uvCornerHandle, 2, GLES20.GL_FLOAT, false,
+                FLOATS_PER_QUAD_VERTEX * 4, 2 * 4);
+        GLES20.glEnableVertexAttribArray(uvCornerHandle);
+
+        GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, instanceBufferId);
+        gpuInstanceCapacityFloats = instanceBuffer.capacity();
+        GLES20.glBufferData(GLES20.GL_ARRAY_BUFFER,
+                gpuInstanceCapacityFloats * 4, null, GLES20.GL_DYNAMIC_DRAW);
+        GLES20.glVertexAttribPointer(centerDrawSizeHandle, 4, GLES20.GL_FLOAT, false,
+                FLOATS_PER_INSTANCE * 4, 0);
+        GLES20.glEnableVertexAttribArray(centerDrawSizeHandle);
+        GLES30.glVertexAttribDivisor(centerDrawSizeHandle, 1);
+        GLES20.glVertexAttribPointer(alphaRotationHandle, 4, GLES20.GL_FLOAT, false,
+                FLOATS_PER_INSTANCE * 4, 4 * 4);
+        GLES20.glEnableVertexAttribArray(alphaRotationHandle);
+        GLES30.glVertexAttribDivisor(alphaRotationHandle, 1);
+        GLES20.glVertexAttribPointer(uvRectHandle, 4, GLES20.GL_FLOAT, false,
+                FLOATS_PER_INSTANCE * 4, 8 * 4);
+        GLES20.glEnableVertexAttribArray(uvRectHandle);
+        GLES30.glVertexAttribDivisor(uvRectHandle, 1);
+
+        GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, 0);
+        GLES30.glBindVertexArray(0);
+    }
+
+    private void ensureGpuInstanceCapacity(int requiredFloats) {
+        if (instanceBufferId == 0 || gpuInstanceCapacityFloats >= requiredFloats) {
+            return;
+        }
+        gpuInstanceCapacityFloats = requiredFloats;
+        GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, instanceBufferId);
+        GLES20.glBufferData(GLES20.GL_ARRAY_BUFFER,
+                gpuInstanceCapacityFloats * 4, null, GLES20.GL_DYNAMIC_DRAW);
+        GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, 0);
+    }
+
+    private void uploadInstances(int instanceCount) {
+        int floats = instanceCount * FLOATS_PER_INSTANCE;
+        ensureGpuInstanceCapacity(floats);
+        instanceBuffer.position(0);
+        instanceBuffer.limit(floats);
+        GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, instanceBufferId);
+        GLES20.glBufferSubData(GLES20.GL_ARRAY_BUFFER, 0, floats * 4, instanceBuffer);
+        GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, 0);
+        instanceBuffer.limit(instanceBuffer.capacity());
     }
 
     private boolean isVisible(RainScene.Drop drop) {
