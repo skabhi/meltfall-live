@@ -7,7 +7,8 @@ param(
 )
 
 if ([string]::IsNullOrWhiteSpace($ImagePath)) {
-    $ImagePath = Join-Path $PSScriptRoot "melting_face_transparent.png"
+    $projectRoot = Resolve-Path (Join-Path $PSScriptRoot "..\..")
+    $ImagePath = Join-Path $projectRoot "assets\melting_face_transparent.png"
 }
 
 function Set-WindowsGpuPreferenceAndRestart {
@@ -63,7 +64,7 @@ if (-not (Test-Path -LiteralPath $ImagePath)) {
     throw "Image not found: $ImagePath"
 }
 
-$assetPath = Join-Path $PSScriptRoot "melting_face_transparent.png"
+$assetPath = Join-Path ([System.IO.Path]::GetTempPath()) "meltfall_wpf_melting_face_transparent.png"
 
 function Convert-MagentaToTransparentPng {
     param(

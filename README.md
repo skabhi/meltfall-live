@@ -20,11 +20,11 @@ The Android Gradle build reads this file and derives the APK `versionName` and
 ## Project Layout
 
 - `MeltingFaceRainAndroid/` - primary Android live wallpaper project.
-- `MeltfallLiveAndroid-debug.apk` - latest debug APK copied to the repo root.
-- `funky_emoji_assets/` - source PNG variants used by the funky wallpaper.
-- `melting_face_wpf.ps1` and `melting_face_wpf_funky.ps1` - Windows WPF scripts.
-- `MeltingFaceRainExe.cs` and `MeltingFaceRainFunkyExe.cs` - Windows executable sources.
-- `MeltingFaceRain.exe` and `MeltingFaceRainFunky.exe` - built Windows executables.
+- `config/defaults.properties` - editable Android release defaults.
+- `dist/android/MeltfallLiveAndroid-debug.apk` - latest debug APK artifact.
+- `assets/` - shared source images and funky PNG variants.
+- `windows/powershell/` - Windows WPF PowerShell scripts.
+- `windows/exe/` - Windows executable sources, icons, and built `.exe` files.
 - `archive/` and `experiments/` - older prototypes and experimental assets.
 
 ## License
@@ -89,11 +89,32 @@ The generated APK is:
 MeltingFaceRainAndroid\app\build\outputs\apk\debug\app-debug.apk
 ```
 
-To refresh the root APK artifact:
+To refresh the debug APK artifact:
 
 ```powershell
-Copy-Item -LiteralPath .\MeltingFaceRainAndroid\app\build\outputs\apk\debug\app-debug.apk -Destination .\MeltfallLiveAndroid-debug.apk -Force
+Copy-Item -LiteralPath .\MeltingFaceRainAndroid\app\build\outputs\apk\debug\app-debug.apk -Destination .\dist\android\MeltfallLiveAndroid-debug.apk -Force
 ```
+
+## Tune Release Defaults
+
+Release defaults are stored in [config/defaults.properties](config/defaults.properties).
+Open it in Notepad before building a release:
+
+```powershell
+notepad .\config\defaults.properties
+```
+
+Valid values are documented inside the file. In short:
+
+- `drop_speed`: `0..200`, where `100` is normal speed and `0` stops falling.
+- `emoji_count`: `0` or greater. There is no app-enforced maximum.
+- `emoji_size`: `60..170`, where `100` is normal size.
+- `fps_limit`: `0`, `30`, `45`, or `60`, where `0` means unlimited.
+- `show_fps`: `true` or `false`; release builds hide the FPS counter anyway.
+
+The debug app also has a developer-only helper that copies the current phone
+settings in `defaults.properties` format. Paste those values into this file,
+commit the change, then build the release AAB.
 
 ## Install On Android Phone
 
@@ -110,13 +131,13 @@ adb devices
 6. Install the debug APK:
 
 ```powershell
-adb install -r .\MeltfallLiveAndroid-debug.apk
+adb install -r .\dist\android\MeltfallLiveAndroid-debug.apk
 ```
 
 If ADB is not on `PATH`, use the full path to `adb.exe`, for example:
 
 ```powershell
-& "C:\Path\To\Android\sdk\platform-tools\adb.exe" install -r .\MeltfallLiveAndroid-debug.apk
+& "C:\Path\To\Android\sdk\platform-tools\adb.exe" install -r .\dist\android\MeltfallLiveAndroid-debug.apk
 ```
 
 ## Use The Android App
@@ -124,21 +145,21 @@ If ADB is not on `PATH`, use the full path to `adb.exe`, for example:
 1. Open **Meltfall Live** on the phone.
 2. Tap **View wallpaper**.
 3. Use the bottom sheet in the preview screen to tune wallpaper-specific
-settings such as speed, emoji count, size, and FPS limit.
+settings such as speed, emoji count, and size.
 4. Tap **Use this wallpaper** to open Android's own live wallpaper preview.
 5. From Android's preview screen, choose whether to apply it to the home screen,
 lock screen, or both.
 
 The gear icon on the main screen opens app-wide settings. Debug builds include
-developer-only options such as the rendered FPS counter.
+developer-only options such as the rendered FPS counter and FPS limit.
 
 ## Windows Desktop Artifacts
 
 The Windows scripts remain usable directly:
 
 ```powershell
-powershell.exe -STA -ExecutionPolicy Bypass -File .\melting_face_wpf.ps1 -ImagePath .\melting_face_transparent.png
-powershell.exe -STA -ExecutionPolicy Bypass -File .\melting_face_wpf_funky.ps1 -ImagePath .\melting_face_transparent.png
+powershell.exe -STA -ExecutionPolicy Bypass -File .\windows\powershell\melting_face_wpf.ps1 -ImagePath .\assets\melting_face_transparent.png
+powershell.exe -STA -ExecutionPolicy Bypass -File .\windows\powershell\melting_face_wpf_funky.ps1 -ImagePath .\assets\melting_face_transparent.png
 ```
 
 The Windows executables were built from the C# sources using the .NET Framework
@@ -156,7 +177,13 @@ git push
 ```
 
 For a version bump, update [VERSION](VERSION), rebuild the Android APK, refresh
-`MeltfallLiveAndroid-debug.apk`, then commit and push the version change.
+`dist/android/MeltfallLiveAndroid-debug.apk`, then commit and push the version
+change. Also tag the matching version:
+
+```powershell
+git tag v1.2.0
+git push origin v1.2.0
+```
 
 This project is configured locally on the original development computer to use
 a dedicated SSH key for pushes. A new computer needs its own GitHub

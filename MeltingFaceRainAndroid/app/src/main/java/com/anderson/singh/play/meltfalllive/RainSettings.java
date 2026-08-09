@@ -12,11 +12,11 @@ public final class RainSettings {
     private static final String FPS = "fps";
     private static final String SHOW_FPS = "show_fps";
 
-    public static final int DEFAULT_SPEED = 100;
-    public static final int DEFAULT_EMOJI_COUNT = 240;
-    public static final int DEFAULT_SIZE = 100;
-    public static final int DEFAULT_FPS = 0;
-    public static final boolean DEFAULT_SHOW_FPS = false;
+    public static final int DEFAULT_SPEED = BuildConfig.DEFAULT_SPEED;
+    public static final int DEFAULT_EMOJI_COUNT = BuildConfig.DEFAULT_EMOJI_COUNT;
+    public static final int DEFAULT_SIZE = BuildConfig.DEFAULT_SIZE;
+    public static final int DEFAULT_FPS = BuildConfig.DEFAULT_FPS;
+    public static final boolean DEFAULT_SHOW_FPS = BuildConfig.DEFAULT_SHOW_FPS;
 
     private RainSettings() {
     }

@@ -169,7 +169,7 @@ public class SettingsActivity extends Activity {
 
     private void addCopyReleaseDefaultsControl(LinearLayout page) {
         Button copy = new Button(this);
-        copy.setText("Copy current values as release defaults");
+        copy.setText("Copy current values for defaults.properties");
         copy.setAllCaps(false);
         copy.setTextSize(16f);
         copy.setTextColor(Color.WHITE);
@@ -183,7 +183,7 @@ public class SettingsActivity extends Activity {
         params.topMargin = dp(14);
         page.addView(copy, params);
 
-        TextView hint = mutedText("Copies the source constants to use before building a release.");
+        TextView hint = mutedText("Paste into config/defaults.properties before building a release.");
         LinearLayout.LayoutParams hintParams = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
@@ -194,13 +194,14 @@ public class SettingsActivity extends Activity {
 
     private void copyReleaseDefaults() {
         String snippet =
-                "public static final int DEFAULT_SPEED = " + values.speedPercent + ";\\n" +
-                "public static final int DEFAULT_EMOJI_COUNT = " + values.emojiCount + ";\\n" +
-                "public static final int DEFAULT_SIZE = " + values.sizePercent + ";\\n" +
-                "public static final int DEFAULT_FPS = " + values.maxFps + ";\\n";
+                "drop_speed=" + values.speedPercent + "\\n" +
+                "emoji_count=" + values.emojiCount + "\\n" +
+                "emoji_size=" + values.sizePercent + "\\n" +
+                "fps_limit=" + values.maxFps + "\\n" +
+                "show_fps=" + values.showFps + "\\n";
         ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
         clipboard.setPrimaryClip(ClipData.newPlainText("Meltfall release defaults", snippet));
-        Toast.makeText(this, "Release defaults copied", Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, "defaults.properties values copied", Toast.LENGTH_SHORT).show();
     }
 
     private void updateLabels() {

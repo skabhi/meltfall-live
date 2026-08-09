@@ -10,9 +10,62 @@ while (meltfallVersionParts.size() < 3) {
 }
 def meltfallVersionCode = meltfallVersionParts[0] * 10000 + meltfallVersionParts[1] * 100 + meltfallVersionParts[2]
 
+def defaultsFile = rootProject.file("../config/defaults.properties")
+def defaults = new Properties()
+if (defaultsFile.exists()) {
+    defaultsFile.withInputStream { stream -> defaults.load(stream) }
+}
+
+def intDefault = { key, fallback ->
+    def raw = defaults.getProperty(key, fallback.toString()).trim()
+    try {
+        return raw as int
+    } catch (NumberFormatException ignored) {
+        throw new GradleException("${key} must be an integer in config/defaults.properties")
+    }
+}
+
+def boolDefault = { key, fallback ->
+    def raw = defaults.getProperty(key, fallback.toString()).trim().toLowerCase(Locale.US)
+    if (raw == "true") {
+        return true
+    }
+    if (raw == "false") {
+        return false
+    }
+    throw new GradleException("${key} must be true or false in config/defaults.properties")
+}
+
+def checkedRange = { key, value, min, max ->
+    if (value < min || value > max) {
+        throw new GradleException("${key} must be between ${min} and ${max} in config/defaults.properties")
+    }
+    return value
+}
+
+def checkedFps = { value ->
+    if (!(value in [0, 30, 45, 60])) {
+        throw new GradleException("fps_limit must be one of 0, 30, 45, or 60 in config/defaults.properties")
+    }
+    return value
+}
+
+def defaultSpeed = checkedRange("drop_speed", intDefault("drop_speed", 100), 0, 200)
+def defaultEmojiCount = intDefault("emoji_count", 240)
+if (defaultEmojiCount < 0) {
+    throw new GradleException("emoji_count must be 0 or greater in config/defaults.properties")
+}
+def defaultEmojiSize = checkedRange("emoji_size", intDefault("emoji_size", 100), 60, 170)
+def defaultFps = checkedFps(intDefault("fps_limit", 0))
+def defaultShowFps = boolDefault("show_fps", false)
+
 android {
     namespace "com.anderson.singh.play.meltfalllive"
     compileSdk 35
+
+    buildFeatures {
+        buildConfig true
+    }
 
     defaultConfig {
         applicationId "com.anderson.singh.play.meltfalllive"
@@ -20,5 +73,11 @@ android {
         targetSdk 35
         versionCode meltfallVersionCode
         versionName meltfallVersionName
+
+        buildConfigField "int", "DEFAULT_SPEED", defaultSpeed.toString()
+        buildConfigField "int", "DEFAULT_EMOJI_COUNT", defaultEmojiCount.toString()
+        buildConfigField "int", "DEFAULT_SIZE", defaultEmojiSize.toString()
+        buildConfigField "int", "DEFAULT_FPS", defaultFps.toString()
+        buildConfigField "boolean", "DEFAULT_SHOW_FPS", defaultShowFps.toString()
     }
 }

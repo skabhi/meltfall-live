@@ -7,7 +7,8 @@ param(
 )
 
 if ([string]::IsNullOrWhiteSpace($ImagePath)) {
-    $ImagePath = Join-Path $PSScriptRoot "melting_face_transparent.png"
+    $projectRoot = Resolve-Path (Join-Path $PSScriptRoot "..\..")
+    $ImagePath = Join-Path $projectRoot "assets\melting_face_transparent.png"
 }
 
 function Set-WindowsGpuPreferenceAndRestart {
@@ -65,7 +66,8 @@ if (-not (Test-Path -LiteralPath $ImagePath)) {
 
 $random = [Random]::new()
 $BaseDropDensity = if ($DropCount -gt 0) { $DropCount / (980.0 * 720.0) } else { 240.0 / (980.0 * 720.0) }
-$assetDir = Join-Path $PSScriptRoot "funky_emoji_assets"
+$projectRoot = Resolve-Path (Join-Path $PSScriptRoot "..\..")
+$assetDir = Join-Path $projectRoot "assets\funky_emoji_assets"
 
 if (-not (Test-Path -LiteralPath $assetDir)) {
     New-Item -ItemType Directory -Path $assetDir | Out-Null

@@ -16,6 +16,18 @@ live wallpaper using a custom rendering view, hardware acceleration,
 The Android app version is read from the repository root `VERSION` file. Update
 that file before building when preparing a new app version.
 
+## Release Defaults
+
+New-install defaults are read at build time from the repository root
+`config/defaults.properties` file. Open it in Notepad before building a release:
+
+```powershell
+notepad ..\config\defaults.properties
+```
+
+The file documents valid values for drop speed, emoji count, emoji size, FPS
+limit, and the debug-only FPS counter default.
+
 ## Build
 
 From the repository root:
@@ -48,10 +60,10 @@ adb devices
 adb install -r .\app\build\outputs\apk\debug\app-debug.apk
 ```
 
-From the repository root, install the copied root APK with:
+From the repository root, install the copied debug APK with:
 
 ```powershell
-adb install -r .\MeltfallLiveAndroid-debug.apk
+adb install -r .\dist\android\MeltfallLiveAndroid-debug.apk
 ```
 
 ## Use
